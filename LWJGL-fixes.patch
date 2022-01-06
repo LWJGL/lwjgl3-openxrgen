@@ -1,0 +1,249 @@
+From 0f329ec68808c27866b81408701d6f3e3623d853 Mon Sep 17 00:00:00 2001
+From: Ioannis Tsakpinis <iotsakp@gmail.com>
+Date: Thu, 6 Jan 2022 18:31:15 +0200
+Subject: [PATCH] LWJGL fixes
+
+---
+ specification/.gitignore                      |  6 +++--
+ specification/registry/xr.xml                 | 27 ++++++++++---------
+ specification/scripts/make_ext_dependency.py  | 22 +++++++++++++++
+ specification/scripts/reflib.py               | 14 ++++++++++
+ .../extensions/khr/khr_loader_init.adoc       |  4 +++
+ .../extensions/khr/khr_visibility_mask.adoc   |  1 -
+ .../msft_composition_layer_reprojection.adoc  |  2 --
+ 7 files changed, 58 insertions(+), 18 deletions(-)
+
+diff --git a/specification/.gitignore b/specification/.gitignore
+index 193e77e..2635e45 100644
+--- a/specification/.gitignore
++++ b/specification/.gitignore
+@@ -5,10 +5,12 @@
+ scripts/__pycache__
+ scripts/xrapi.py
+ out/*
+-generated/*
++#generated/*
++generated/**/*inc
+ sources/chapters/extensions/meta/*
+ example-builds/generated/
+-man/*
++#man/*
++man/logfile
+ artifacts/
+ temp/
+ diffs/
+diff --git a/specification/registry/xr.xml b/specification/registry/xr.xml
+index 00e97cd..e382fa8 100644
+--- a/specification/registry/xr.xml
++++ b/specification/registry/xr.xml
+@@ -1501,8 +1501,8 @@ maintained in the default branch of the Khronos OpenXR GitHub project.
+         <type category="struct" name="XrControllerModelNodePropertiesMSFT">
+             <member values="XR_TYPE_CONTROLLER_MODEL_NODE_PROPERTIES_MSFT"><type>XrStructureType</type> <name>type</name></member>
+             <member><type>void</type>* <name>next</name></member>
+-            <member><type>char</type> <name>parentNodeName</name>[XR_MAX_CONTROLLER_MODEL_NODE_NAME_SIZE_MSFT]</member>
+-            <member><type>char</type> <name>nodeName</name>[XR_MAX_CONTROLLER_MODEL_NODE_NAME_SIZE_MSFT]</member>
++            <member><type>char</type> <name>parentNodeName</name>[<enum>XR_MAX_CONTROLLER_MODEL_NODE_NAME_SIZE_MSFT</enum>]</member>
++            <member><type>char</type> <name>nodeName</name>[<enum>XR_MAX_CONTROLLER_MODEL_NODE_NAME_SIZE_MSFT</enum>]</member>
+         </type>
+         <type category="struct" name="XrControllerModelPropertiesMSFT">
+             <member values="XR_TYPE_CONTROLLER_MODEL_PROPERTIES_MSFT"><type>XrStructureType</type> <name>type</name></member>
+@@ -1924,12 +1924,12 @@ maintained in the default branch of the Khronos OpenXR GitHub project.
+         <type category="struct" name="XrPassthroughColorMapMonoToRgbaFB">
+             <member values="XR_TYPE_PASSTHROUGH_COLOR_MAP_MONO_TO_RGBA_FB"><type>XrStructureType</type> <name>type</name></member>
+             <member>const <type>void</type>* <name>next</name></member>
+-            <member><type>XrColor4f</type>   <name>textureColorMap</name>[XR_PASSTHROUGH_COLOR_MAP_MONO_SIZE_FB]</member>
++            <member><type>XrColor4f</type>   <name>textureColorMap</name>[<enum>XR_PASSTHROUGH_COLOR_MAP_MONO_SIZE_FB</enum>]</member>
+         </type>
+         <type category="struct" name="XrPassthroughColorMapMonoToMonoFB">
+             <member values="XR_TYPE_PASSTHROUGH_COLOR_MAP_MONO_TO_MONO_FB"><type>XrStructureType</type> <name>type</name></member>
+             <member>const <type>void</type>* <name>next</name></member>
+-            <member><type>uint8_t</type>     <name>textureColorMap</name>[XR_PASSTHROUGH_COLOR_MAP_MONO_SIZE_FB]</member>
++            <member><type>uint8_t</type>     <name>textureColorMap</name>[<enum>XR_PASSTHROUGH_COLOR_MAP_MONO_SIZE_FB</enum>]</member>
+         </type>
+         <type category="struct" name="XrEventDataPassthroughStateChangedFB">
+             <member values="XR_TYPE_EVENT_DATA_PASSTHROUGH_STATE_CHANGED_FB"><type>XrStructureType</type> <name>type</name></member>
+@@ -2708,9 +2708,9 @@ maintained in the default branch of the Khronos OpenXR GitHub project.
+             <proto><type>XrResult</type> <name>xrEnumerateViewConfigurations</name></proto>
+             <param><type>XrInstance</type> <name>instance</name></param>
+             <param><type>XrSystemId</type> <name>systemId</name></param>
+-            <param optional="true"><type>uint32_t</type> <name>viewConfigurationTypeCapacityInput</name></param>
+-            <param><type>uint32_t</type>* <name>viewConfigurationTypeCountOutput</name></param>
+-            <param optional="true" len="viewConfigurationTypeCapacityInput"><type>XrViewConfigurationType</type>* <name>viewConfigurationTypes</name></param>
++            <param optional="true"><type>uint32_t</type> <name>viewConfigurationsTypeCapacityInput</name></param>
++            <param><type>uint32_t</type>* <name>viewConfigurationsTypeCountOutput</name></param>
++            <param optional="true" len="viewConfigurationsTypeCapacityInput"><type>XrViewConfigurationType</type>* <name>viewConfigurationsTypes</name></param>
+         </command>
+         <command successcodes="XR_SUCCESS" errorcodes="XR_ERROR_VALIDATION_FAILURE,XR_ERROR_RUNTIME_FAILURE,XR_ERROR_HANDLE_INVALID,XR_ERROR_INSTANCE_LOST,XR_ERROR_SIZE_INSUFFICIENT,XR_ERROR_VIEW_CONFIGURATION_TYPE_UNSUPPORTED,XR_ERROR_SYSTEM_INVALID">
+             <proto><type>XrResult</type> <name>xrEnumerateEnvironmentBlendModes</name></proto>
+@@ -3049,7 +3049,7 @@ maintained in the default branch of the Khronos OpenXR GitHub project.
+         <command successcodes="XR_SUCCESS" errorcodes="XR_ERROR_FUNCTION_UNSUPPORTED,XR_ERROR_VALIDATION_FAILURE,XR_ERROR_RUNTIME_FAILURE,XR_ERROR_HANDLE_INVALID,XR_ERROR_INSTANCE_LOST,XR_ERROR_TIME_INVALID">
+             <proto><type>XrResult</type> <name>xrConvertTimespecTimeToTimeKHR</name></proto>
+             <param><type>XrInstance</type> <name>instance</name></param>
+-            <param>const struct <type>timespec</type>* <name>timespecTime</name></param>
++            <param>const struct <type>timespec</type>* <name>unixTime</name></param>
+             <param><type>XrTime</type>* <name>time</name></param>
+         </command>
+
+@@ -3323,7 +3323,7 @@ maintained in the default branch of the Khronos OpenXR GitHub project.
+         <command successcodes="XR_SUCCESS,XR_SESSION_LOSS_PENDING" errorcodes="XR_ERROR_FUNCTION_UNSUPPORTED,XR_ERROR_VALIDATION_FAILURE,XR_ERROR_RUNTIME_FAILURE,XR_ERROR_HANDLE_INVALID,XR_ERROR_INSTANCE_LOST,XR_ERROR_SESSION_LOST,XR_ERROR_FEATURE_UNSUPPORTED,XR_ERROR_COLOR_SPACE_UNSUPPORTED_FB">
+             <proto><type>XrResult</type> <name>xrSetColorSpaceFB</name></proto>
+             <param><type>XrSession</type> <name>session</name></param>
+-            <param>const <type>XrColorSpaceFB</type> <name>colorspace</name></param>
++            <param><type>XrColorSpaceFB</type> <name>colorSpace</name></param>
+         </command>
+
+         <!-- XR_FB_foveation -->
+@@ -3520,9 +3520,9 @@ maintained in the default branch of the Khronos OpenXR GitHub project.
+         <command successcodes="XR_SUCCESS" errorcodes="XR_ERROR_FUNCTION_UNSUPPORTED,XR_ERROR_VALIDATION_FAILURE,XR_ERROR_RUNTIME_FAILURE,XR_ERROR_HANDLE_INVALID,XR_ERROR_INSTANCE_LOST,XR_ERROR_SIZE_INSUFFICIENT">
+             <proto><type>XrResult</type> <name>xrEnumerateViveTrackerPathsHTCX</name></proto>
+             <param><type>XrInstance</type> <name>instance</name></param>
+-            <param optional="true"><type>uint32_t</type> <name>pathCapacityInput</name></param>
+-            <param><type>uint32_t</type>* <name>pathCountOutput</name></param>
+-            <param optional="true" len="pathCapacityInput"><type>XrViveTrackerPathsHTCX</type>* <name>paths</name></param>
++            <param optional="true"><type>uint32_t</type> <name>pathsCapacityInput</name></param>
++            <param><type>uint32_t</type>* <name>pathsCountOutput</name></param>
++            <param optional="true" len="pathsCapacityInput"><type>XrViveTrackerPathsHTCX</type>* <name>viveTrackerPaths</name></param>
+         </command>
+
+         <!-- commands for XR_VARJO_marker_tracking -->
+@@ -3916,7 +3916,7 @@ maintained in the default branch of the Khronos OpenXR GitHub project.
+             <enum offset="1" extends="XrStructureType"        name="XR_TYPE_GRAPHICS_BINDING_OPENGL_ES_ANDROID_KHR"/>
+             <enum offset="2" extends="XrStructureType"        name="XR_TYPE_SWAPCHAIN_IMAGE_OPENGL_ES_KHR"/>
+             <enum offset="3" extends="XrStructureType"        name="XR_TYPE_GRAPHICS_REQUIREMENTS_OPENGL_ES_KHR"/>
+-            <type name="XrGraphicsBindingOpenGLESAndroidKHR"/>
++            <!--<type name="XrGraphicsBindingOpenGLESAndroidKHR"/>-->
+             <type name="XrSwapchainImageOpenGLESKHR"/>
+             <type name="XrGraphicsRequirementsOpenGLESKHR"/>
+             <command name="xrGetOpenGLESGraphicsRequirementsKHR"/>
+@@ -4438,6 +4438,7 @@ maintained in the default branch of the Khronos OpenXR GitHub project.
+
+             <enum offset="0" extends="XrStructureType"                       name="XR_TYPE_COMPOSITION_LAYER_SECURE_CONTENT_FB"/>
+             <type name="XrCompositionLayerSecureContentFB"/>
++            <type name="XrCompositionLayerSecureContentFlagBitsFB"/>
+         </require>
+     </extension>
+
+diff --git a/specification/scripts/make_ext_dependency.py b/specification/scripts/make_ext_dependency.py
+index 4f3ac43..478751c 100755
+--- a/specification/scripts/make_ext_dependency.py
++++ b/specification/scripts/make_ext_dependency.py
+@@ -193,6 +193,28 @@ if __name__ == '__main__':
+             # Skip unsupported extensions
+             pass
+
++    allExts.remove('XR_KHR_D3D11_enable')
++    khrExts.remove('XR_KHR_D3D11_enable')
++
++    allExts.remove('XR_KHR_D3D12_enable')
++    khrExts.remove('XR_KHR_D3D12_enable')
++
++    allExts.remove('XR_KHR_android_create_instance')
++    khrExts.remove('XR_KHR_android_create_instance')
++
++    allExts.remove('XR_KHR_android_surface_swapchain')
++    khrExts.remove('XR_KHR_android_surface_swapchain')
++
++    allExts.remove('XR_KHR_android_thread_settings')
++    khrExts.remove('XR_KHR_android_thread_settings')
++
++    allExts.remove('XR_KHR_loader_init_android')
++    khrExts.remove('XR_KHR_loader_init_android')
++
++    allExts.remove('XR_FB_android_surface_swapchain_create')
++    allExts.remove('XR_FB_swapchain_update_state_android_surface')
++    allExts.remove('XR_OCULUS_android_session_state_enable')
++
+     if args.outscript:
+         make_dir(args.outscript)
+         fp = open(args.outscript, 'w', encoding='utf-8')
+diff --git a/specification/scripts/reflib.py b/specification/scripts/reflib.py
+index 50d1b5a..b03d426 100644
+--- a/specification/scripts/reflib.py
++++ b/specification/scripts/reflib.py
+@@ -219,6 +219,11 @@ def nextPara(file, line):
+     maxLine = len(file) - 1
+     # Skip over current paragraph
+     while (line != maxLine and not isempty(file[line])):
++        # LWJGL: Skip note blocks (may contain empty lines)
++        if (file[line] == '====\n'):
++            line = line + 1
++            while (line != maxLine and file[line] != '====\n'):
++                line = line + 1
+         line = line + 1
+     # Skip over white space
+     while (line != maxLine and isempty(file[line])):
+@@ -267,6 +272,10 @@ def clampToBlock(line, minline, maxline):
+
+     return line
+
++# LWJGL: body/Description block detection
++regexListItem = re.compile('^(?:[/]|\s+[^/])')
++regexAnchorPrefix = re.compile('^:anchor-prefix:$')
++
+ def fixupRefs(pageMap, specFile, file):
+     """Fill in missing fields in pageInfo structures, to the extent they can be
+     inferred.
+@@ -324,6 +333,11 @@ def fixupRefs(pageMap, specFile, file):
+                 pi.param = nextPara(file, pi.include)
+                 if pi.body is None:
+                     pi.body = nextPara(file, pi.param)
++                    # LWJGL: body/Description block detection
++                    while regexListItem.match(file[pi.body]):
++                        pi.body = nextPara(file, pi.body)
++                    if regexAnchorPrefix.match(file[pi.body]):
++                        pi.body = nextPara(file, pi.body)
+             else:
+                 if pi.body is None:
+                     pi.body = nextPara(file, pi.include)
+diff --git a/specification/sources/chapters/extensions/khr/khr_loader_init.adoc b/specification/sources/chapters/extensions/khr/khr_loader_init.adoc
+index 39a4e63..d02251f 100644
+--- a/specification/sources/chapters/extensions/khr/khr_loader_init.adoc
++++ b/specification/sources/chapters/extensions/khr/khr_loader_init.adoc
+@@ -53,6 +53,7 @@ include::../../../../generated/validity/structs/XrLoaderInitInfoBaseHeaderKHR.tx
+ --
+
+ *New Functions*
++
+ [open,refpage='xrInitializeLoaderKHR',desc='Initializes loader',type='protos']
+ --
+ To initialize an OpenXR loader with platform or implementation-specific
+@@ -66,7 +67,10 @@ include::../../../../generated/api/protos/xrInitializeLoaderKHR.txt[]
+   slink:XrLoaderInitInfoBaseHeaderKHR structure, which is a polymorphic type
+   defined by other platform- or implementation-specific extensions.
+ ****
++
++include::../../../../generated/validity/protos/xrInitializeLoaderKHR.txt[]
+ --
++
+ *Issues*
+
+ *Version History*
+diff --git a/specification/sources/chapters/extensions/khr/khr_visibility_mask.adoc b/specification/sources/chapters/extensions/khr/khr_visibility_mask.adoc
+index ad254b9..c416638 100644
+--- a/specification/sources/chapters/extensions/khr/khr_visibility_mask.adoc
++++ b/specification/sources/chapters/extensions/khr/khr_visibility_mask.adoc
+@@ -105,7 +105,6 @@ include::../../../../generated/api/structs/XrVisibilityMaskKHR.txt[]
+   When rendering the mask for use in a projection layer, these vertices must
+   be transformed by the application's projection matrix used for the
+   respective slink:XrCompositionLayerProjectionView.
+-
+ * pname:indexCapacityInput is the capacity of the pname:indices array, or
+   `0` to indicate a request to retrieve the required capacity.
+ * pname:indexCountOutput is filled in by the runtime with the count of
+diff --git a/specification/sources/chapters/extensions/msft/msft_composition_layer_reprojection.adoc b/specification/sources/chapters/extensions/msft/msft_composition_layer_reprojection.adoc
+index 0715001..af66667 100644
+--- a/specification/sources/chapters/extensions/msft/msft_composition_layer_reprojection.adoc
++++ b/specification/sources/chapters/extensions/msft/msft_composition_layer_reprojection.adoc
+@@ -171,10 +171,8 @@ include::../../../../generated/api/structs/XrCompositionLayerReprojectionPlaneOv
+ ****
+ * pname:position describes the position of the focus plane represented in
+   the corresponding slink:XrCompositionLayerProjection::pname:space.
+-
+ * pname:normal is a unit vector describes the focus plane normal represented
+   in the corresponding slink:XrCompositionLayerProjection::pname:space.
+-
+ * pname:velocity is a velocity of the position in the corresponding
+   slink:XrCompositionLayerProjection::pname:space measured in meters per
+   second.
+--
+2.30.2.windows.1
