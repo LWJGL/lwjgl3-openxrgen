@@ -459,7 +459,7 @@ private fun nodeToParamJavaDoc(members: StructuralNode) = findParameterList(memb
             }
             .groupBy { (param) -> param }
             .map { (param, descriptions) ->
-                param to if (descriptions.size == 1)
+                param to (if (descriptions.size == 1)
                     descriptions[0].second.let {
                         if (!it.startsWith("\"\""))
                             it.replace(ESCAPE_REGEX, """\\$0""")
@@ -475,6 +475,7 @@ private fun nodeToParamJavaDoc(members: StructuralNode) = findParameterList(memb
                                 description
                         }
                         .joinToString("\n\n$t$t", prefix = "\"\"", postfix = "\"\"")
+                    ).replace("\\0", "\\\\0")
             }
     }
     .toMap(HashMap())
