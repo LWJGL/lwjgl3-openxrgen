@@ -67,14 +67,7 @@ internal fun convert(root: Path, structs: Map<String, TypeStruct>) {
         .associateWithTo(EXTENSION_TEMPLATES) { it.template }
 
     val attribs = attribsBuilder
-        .attribute("appendices", root.resolve("appendices").toString())
-        .attribute("chapters", root.resolve("chapters").toString())
-        .attribute("config", root.resolve("config").toString())
-        .attribute("generated", root.resolve("gen").toString())
-        .attribute("images", root.resolve("images").toString())
-        .attribute("spirv", "https://htmlpreview.github.io/?https://github.com/KhronosGroup/SPIRV-Registry/blob/master/extensions")
-        .attribute("anchor-prefix")
-        .attribute("refprefix")
+        .attribute("vkRefPageRoot", "https://www.khronos.org/registry/vulkan/specs/1.2-extensions/man/html")
         .attribute("XR_VERSION_1_0")
         .attributes(extensionIDs)
         // These two are necessary because something goes wrong when a Preprocessor is used
