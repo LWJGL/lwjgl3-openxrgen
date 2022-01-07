@@ -526,7 +526,7 @@ ${templateTypes.asSequence()
                             }
 
                         val nullable = if (
-                            (member.optional != null || (member.noautovalidity != null /*&& member.len.any()*/)) && 
+                            (member.optional != null || (member.noautovalidity != null /*&& member.len.any()*/) || (member.name == "next" && member.type == "void") /* TODO: remove when xr.xml is fixed */) && 
                             (member.indirection.isNotEmpty() || types.getValue(member.type).let { it is TypeFuncpointer || (it is TypeHandle && it.type == "XR_DEFINE_HANDLE") })
                         ) "nullable.." else ""
 
