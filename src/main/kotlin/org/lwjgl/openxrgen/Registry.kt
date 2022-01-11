@@ -484,10 +484,10 @@ ${templateTypes.asSequence()
 
     """}${struct.members.asSequence()
                     .map { member ->
-                        val pointerSetters = if (member.name == "pNext") {
-                            val pNextTypes = structExtends[struct.name]
-                            if (pNextTypes != null) {
-                                "PointerSetter(\n$t$t${pNextTypes.joinToString { "\"$it\"" } },\n$t${t}prepend = true\n$t).."
+                        val pointerSetters = if ((member.name == "next" && member.type == "void" && member.indirection == ".p")) {
+                            val nextTypes = structExtends[struct.name]
+                            if (nextTypes != null) {
+                                "PointerSetter(\n$t$t${nextTypes.joinToString { "\"$it\"" } },\n$t${t}prepend = true\n$t).."
                             } else {
                                 ""
                             }
