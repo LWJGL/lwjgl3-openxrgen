@@ -30,6 +30,8 @@ internal val DISABLED_EXTENSIONS = setOf(
 )
 
 internal val EXTENSION_TOKEN_REPLACEMENTS = mapOf(
+    "egl" to "EGL",
+    "es" to "ES",
     "hp" to "HP",
     "opengl" to "OpenGL"
 )
