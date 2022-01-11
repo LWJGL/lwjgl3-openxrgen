@@ -540,7 +540,7 @@ ${templateTypes.asSequence()
                         "$pointerSetters$expression$autoSize$nullable$type(\"${member.name}\", \"${structDoc?.members?.get(member.name) ?: ""}\"${if (member.bits == null) "" else ", bits = ${member.bits}"})${
                         if (member.array != null) "[${member.array}]" else ""
                         }${
-                        if (struct.returnedonly && (member.name == "sType" || member.name == "pNext")) ".mutable()" else ""
+                        if (struct.returnedonly && ((member.name == "type" && member.type == "XrStructureType") || (member.name == "next" && member.type == "void" && member.indirection == ".p"))) ".mutable()" else ""
                         }"
                     }
                     .joinToString("\n$t")}
