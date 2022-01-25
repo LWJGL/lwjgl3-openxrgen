@@ -1,20 +1,20 @@
-From 0f329ec68808c27866b81408701d6f3e3623d853 Mon Sep 17 00:00:00 2001
+From 10486497e855348990f4fb6bc090091014677ae8 Mon Sep 17 00:00:00 2001
 From: Ioannis Tsakpinis <iotsakp@gmail.com>
 Date: Thu, 6 Jan 2022 18:31:15 +0200
 Subject: [PATCH] LWJGL fixes
 
 ---
- specification/.gitignore                      |  6 +++--
- specification/registry/xr.xml                 | 27 ++++++++++---------
- specification/scripts/make_ext_dependency.py  | 22 +++++++++++++++
- specification/scripts/reflib.py               | 14 ++++++++++
+ specification/.gitignore                      |  6 ++--
+ specification/registry/xr.xml                 | 33 ++++++++++---------
+ specification/scripts/make_ext_dependency.py  | 22 +++++++++++++
+ specification/scripts/reflib.py               | 14 ++++++++
  .../extensions/khr/khr_loader_init.adoc       |  4 +++
  .../extensions/khr/khr_visibility_mask.adoc   |  1 -
  .../msft_composition_layer_reprojection.adoc  |  2 --
- 7 files changed, 58 insertions(+), 18 deletions(-)
+ 7 files changed, 61 insertions(+), 21 deletions(-)
 
 diff --git a/specification/.gitignore b/specification/.gitignore
-index 193e77e..2635e45 100644
+index f25998c..01b1c30 100644
 --- a/specification/.gitignore
 +++ b/specification/.gitignore
 @@ -5,10 +5,12 @@
@@ -33,10 +33,10 @@ index 193e77e..2635e45 100644
  temp/
  diffs/
 diff --git a/specification/registry/xr.xml b/specification/registry/xr.xml
-index 00e97cd..e382fa8 100644
+index 05e083f..1a07e14 100644
 --- a/specification/registry/xr.xml
 +++ b/specification/registry/xr.xml
-@@ -1501,8 +1501,8 @@ maintained in the default branch of the Khronos OpenXR GitHub project.
+@@ -1533,8 +1533,8 @@ maintained in the default branch of the Khronos OpenXR GitHub project.
          <type category="struct" name="XrControllerModelNodePropertiesMSFT">
              <member values="XR_TYPE_CONTROLLER_MODEL_NODE_PROPERTIES_MSFT"><type>XrStructureType</type> <name>type</name></member>
              <member><type>void</type>* <name>next</name></member>
@@ -47,7 +47,25 @@ index 00e97cd..e382fa8 100644
          </type>
          <type category="struct" name="XrControllerModelPropertiesMSFT">
              <member values="XR_TYPE_CONTROLLER_MODEL_PROPERTIES_MSFT"><type>XrStructureType</type> <name>type</name></member>
-@@ -1924,12 +1924,12 @@ maintained in the default branch of the Khronos OpenXR GitHub project.
+@@ -1861,7 +1861,7 @@ maintained in the default branch of the Khronos OpenXR GitHub project.
+             <member values="XR_TYPE_RENDER_MODEL_PROPERTIES_FB"><type>XrStructureType</type> <name>type</name></member>
+             <member><type>void</type>*                                                       <name>next</name></member>
+             <member><type>uint32_t</type>                                                    <name>vendorId</name></member>
+-            <member><type>char</type>                                                        <name>modelName</name>[XR_MAX_RENDER_MODEL_NAME_SIZE_FB]</member>
++            <member><type>char</type>                                                        <name>modelName</name>[<enum>XR_MAX_RENDER_MODEL_NAME_SIZE_FB</enum>]</member>
+             <member><type>XrRenderModelKeyFB</type>                                          <name>modelKey</name></member>
+             <member><type>uint32_t</type>                                                    <name>modelVersion</name></member>
+             <member><type>XrRenderModelFlagsFB</type>                                        <name>flags</name></member>
+@@ -1894,7 +1894,7 @@ maintained in the default branch of the Khronos OpenXR GitHub project.
+             <member><type>uint64_t</type> <name>trackedKeyboardId</name></member>
+             <member><type>XrVector3f</type> <name>size</name></member>
+             <member><type>XrKeyboardTrackingFlagsFB</type> <name>flags</name></member>
+-            <member><type>char</type> <name>name</name>[XR_MAX_KEYBOARD_TRACKING_NAME_SIZE_FB]</member>
++            <member><type>char</type> <name>name</name>[<enum>XR_MAX_KEYBOARD_TRACKING_NAME_SIZE_FB</enum>]</member>
+         </type>
+         <type category="struct" name="XrKeyboardSpaceCreateInfoFB">
+             <member values="XR_TYPE_KEYBOARD_SPACE_CREATE_INFO_FB"><type>XrStructureType</type> <name>type</name></member>
+@@ -2012,12 +2012,12 @@ maintained in the default branch of the Khronos OpenXR GitHub project.
          <type category="struct" name="XrPassthroughColorMapMonoToRgbaFB">
              <member values="XR_TYPE_PASSTHROUGH_COLOR_MAP_MONO_TO_RGBA_FB"><type>XrStructureType</type> <name>type</name></member>
              <member>const <type>void</type>* <name>next</name></member>
@@ -62,7 +80,16 @@ index 00e97cd..e382fa8 100644
          </type>
          <type category="struct" name="XrEventDataPassthroughStateChangedFB">
              <member values="XR_TYPE_EVENT_DATA_PASSTHROUGH_STATE_CHANGED_FB"><type>XrStructureType</type> <name>type</name></member>
-@@ -2708,9 +2708,9 @@ maintained in the default branch of the Khronos OpenXR GitHub project.
+@@ -2139,7 +2139,7 @@ maintained in the default branch of the Khronos OpenXR GitHub project.
+
+         <!-- XR_EXT_uuid -->
+         <type category="struct" name="XrUuidEXT">
+-            <member><type>uint8_t</type> <name>data</name>[XR_UUID_SIZE_EXT]</member>
++            <member><type>uint8_t</type> <name>data</name>[<enum>XR_UUID_SIZE_EXT</enum>]</member>
+         </type>
+
+         <!-- XR_ALMALENCE_digital_lens_control -->
+@@ -2932,9 +2932,9 @@ maintained in the default branch of the Khronos OpenXR GitHub project.
              <proto><type>XrResult</type> <name>xrEnumerateViewConfigurations</name></proto>
              <param><type>XrInstance</type> <name>instance</name></param>
              <param><type>XrSystemId</type> <name>systemId</name></param>
@@ -75,7 +102,7 @@ index 00e97cd..e382fa8 100644
          </command>
          <command successcodes="XR_SUCCESS" errorcodes="XR_ERROR_VALIDATION_FAILURE,XR_ERROR_RUNTIME_FAILURE,XR_ERROR_HANDLE_INVALID,XR_ERROR_INSTANCE_LOST,XR_ERROR_SIZE_INSUFFICIENT,XR_ERROR_VIEW_CONFIGURATION_TYPE_UNSUPPORTED,XR_ERROR_SYSTEM_INVALID">
              <proto><type>XrResult</type> <name>xrEnumerateEnvironmentBlendModes</name></proto>
-@@ -3049,7 +3049,7 @@ maintained in the default branch of the Khronos OpenXR GitHub project.
+@@ -3273,7 +3273,7 @@ maintained in the default branch of the Khronos OpenXR GitHub project.
          <command successcodes="XR_SUCCESS" errorcodes="XR_ERROR_FUNCTION_UNSUPPORTED,XR_ERROR_VALIDATION_FAILURE,XR_ERROR_RUNTIME_FAILURE,XR_ERROR_HANDLE_INVALID,XR_ERROR_INSTANCE_LOST,XR_ERROR_TIME_INVALID">
              <proto><type>XrResult</type> <name>xrConvertTimespecTimeToTimeKHR</name></proto>
              <param><type>XrInstance</type> <name>instance</name></param>
@@ -84,7 +111,7 @@ index 00e97cd..e382fa8 100644
              <param><type>XrTime</type>* <name>time</name></param>
          </command>
 
-@@ -3323,7 +3323,7 @@ maintained in the default branch of the Khronos OpenXR GitHub project.
+@@ -3547,7 +3547,7 @@ maintained in the default branch of the Khronos OpenXR GitHub project.
          <command successcodes="XR_SUCCESS,XR_SESSION_LOSS_PENDING" errorcodes="XR_ERROR_FUNCTION_UNSUPPORTED,XR_ERROR_VALIDATION_FAILURE,XR_ERROR_RUNTIME_FAILURE,XR_ERROR_HANDLE_INVALID,XR_ERROR_INSTANCE_LOST,XR_ERROR_SESSION_LOST,XR_ERROR_FEATURE_UNSUPPORTED,XR_ERROR_COLOR_SPACE_UNSUPPORTED_FB">
              <proto><type>XrResult</type> <name>xrSetColorSpaceFB</name></proto>
              <param><type>XrSession</type> <name>session</name></param>
@@ -93,7 +120,7 @@ index 00e97cd..e382fa8 100644
          </command>
 
          <!-- XR_FB_foveation -->
-@@ -3520,9 +3520,9 @@ maintained in the default branch of the Khronos OpenXR GitHub project.
+@@ -3803,9 +3803,9 @@ maintained in the default branch of the Khronos OpenXR GitHub project.
          <command successcodes="XR_SUCCESS" errorcodes="XR_ERROR_FUNCTION_UNSUPPORTED,XR_ERROR_VALIDATION_FAILURE,XR_ERROR_RUNTIME_FAILURE,XR_ERROR_HANDLE_INVALID,XR_ERROR_INSTANCE_LOST,XR_ERROR_SIZE_INSUFFICIENT">
              <proto><type>XrResult</type> <name>xrEnumerateViveTrackerPathsHTCX</name></proto>
              <param><type>XrInstance</type> <name>instance</name></param>
@@ -106,7 +133,7 @@ index 00e97cd..e382fa8 100644
          </command>
 
          <!-- commands for XR_VARJO_marker_tracking -->
-@@ -3916,7 +3916,7 @@ maintained in the default branch of the Khronos OpenXR GitHub project.
+@@ -4207,7 +4207,7 @@ maintained in the default branch of the Khronos OpenXR GitHub project.
              <enum offset="1" extends="XrStructureType"        name="XR_TYPE_GRAPHICS_BINDING_OPENGL_ES_ANDROID_KHR"/>
              <enum offset="2" extends="XrStructureType"        name="XR_TYPE_SWAPCHAIN_IMAGE_OPENGL_ES_KHR"/>
              <enum offset="3" extends="XrStructureType"        name="XR_TYPE_GRAPHICS_REQUIREMENTS_OPENGL_ES_KHR"/>
@@ -115,7 +142,7 @@ index 00e97cd..e382fa8 100644
              <type name="XrSwapchainImageOpenGLESKHR"/>
              <type name="XrGraphicsRequirementsOpenGLESKHR"/>
              <command name="xrGetOpenGLESGraphicsRequirementsKHR"/>
-@@ -4438,6 +4438,7 @@ maintained in the default branch of the Khronos OpenXR GitHub project.
+@@ -4729,6 +4729,7 @@ maintained in the default branch of the Khronos OpenXR GitHub project.
 
              <enum offset="0" extends="XrStructureType"                       name="XR_TYPE_COMPOSITION_LAYER_SECURE_CONTENT_FB"/>
              <type name="XrCompositionLayerSecureContentFB"/>
@@ -124,7 +151,7 @@ index 00e97cd..e382fa8 100644
      </extension>
 
 diff --git a/specification/scripts/make_ext_dependency.py b/specification/scripts/make_ext_dependency.py
-index 4f3ac43..478751c 100755
+index 13bccbe..4e826ba 100755
 --- a/specification/scripts/make_ext_dependency.py
 +++ b/specification/scripts/make_ext_dependency.py
 @@ -193,6 +193,28 @@ if __name__ == '__main__':
@@ -157,7 +184,7 @@ index 4f3ac43..478751c 100755
          make_dir(args.outscript)
          fp = open(args.outscript, 'w', encoding='utf-8')
 diff --git a/specification/scripts/reflib.py b/specification/scripts/reflib.py
-index 50d1b5a..b03d426 100644
+index 8374b84..594333d 100644
 --- a/specification/scripts/reflib.py
 +++ b/specification/scripts/reflib.py
 @@ -219,6 +219,11 @@ def nextPara(file, line):
@@ -196,7 +223,7 @@ index 50d1b5a..b03d426 100644
                  if pi.body is None:
                      pi.body = nextPara(file, pi.include)
 diff --git a/specification/sources/chapters/extensions/khr/khr_loader_init.adoc b/specification/sources/chapters/extensions/khr/khr_loader_init.adoc
-index 39a4e63..d02251f 100644
+index 02ab449..33907c8 100644
 --- a/specification/sources/chapters/extensions/khr/khr_loader_init.adoc
 +++ b/specification/sources/chapters/extensions/khr/khr_loader_init.adoc
 @@ -53,6 +53,7 @@ include::../../../../generated/validity/structs/XrLoaderInitInfoBaseHeaderKHR.tx
@@ -219,7 +246,7 @@ index 39a4e63..d02251f 100644
 
  *Version History*
 diff --git a/specification/sources/chapters/extensions/khr/khr_visibility_mask.adoc b/specification/sources/chapters/extensions/khr/khr_visibility_mask.adoc
-index ad254b9..c416638 100644
+index 1f1eb04..833f549 100644
 --- a/specification/sources/chapters/extensions/khr/khr_visibility_mask.adoc
 +++ b/specification/sources/chapters/extensions/khr/khr_visibility_mask.adoc
 @@ -105,7 +105,6 @@ include::../../../../generated/api/structs/XrVisibilityMaskKHR.txt[]
