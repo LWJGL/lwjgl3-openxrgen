@@ -46,9 +46,9 @@ internal val IMPORTS = mapOf(
 )
 
 internal val SYSTEM_STRUCTS = mapOf(
-    "IUnknown" to TypeStruct("struct", "IUnknown", false, null, emptyList(), null),
-    "LARGE_INTEGER" to TypeStruct("union", "LARGE_INTEGER", false, null, emptyList(), null),
-    "timespec" to TypeStruct("struct", "struct timespec", false, null, emptyList(), null)
+    "IUnknown" to TypeStruct("struct", "IUnknown", false, null, emptyList(), null, null),
+    "LARGE_INTEGER" to TypeStruct("union", "LARGE_INTEGER", false, null, emptyList(), null, null),
+    "timespec" to TypeStruct("struct", "struct timespec", false, null, emptyList(), null, null)
 )
 
 internal val MACROS = setOf(
