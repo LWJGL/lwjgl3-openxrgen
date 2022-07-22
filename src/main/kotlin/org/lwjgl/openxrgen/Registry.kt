@@ -355,7 +355,7 @@ private fun generateTypes(
     val file = root.resolve("$template.kt")
 
     LWJGLWriter(OutputStreamWriter(Files.newOutputStream(file), Charsets.UTF_8)).use { writer ->
-        val forwardDeclarations = HashSet<TypeStruct>()
+        val forwardDeclarations = HashSet<String>()
         val structDefinitions = HashSet<String>()
 
         val structInTemplate = templateTypes.asSequence()
@@ -398,8 +398,8 @@ ${templateTypes.asSequence()
                 val structTypes = fp.params.asSequence()
                     .mapNotNull {
                         val type = types[it.type]
-                        if (type is TypeStruct && !forwardDeclarations.contains(type)) {
-                            forwardDeclarations.add(type)
+                        if (type is TypeStruct && !forwardDeclarations.contains(type.name)) {
+                            forwardDeclarations.add(type.name)
                             type
                         } else {
                             null
@@ -452,8 +452,11 @@ ${templateTypes.asSequence()
                 var alias: String? = null
                 struct.alias.let {
                     if (it != null) {
-                        if (!structDefinitions.contains(it) && forwardDeclarations.none { decl -> decl.name == it } && structInTemplate.contains(it)) {
-                            aliasForwardDecl = "val _$it = ${struct.type}(Module.OPENXR, \"${struct.alias}\")\n"
+                        if (!structDefinitions.contains(it) && structInTemplate.contains(it)) {
+                            if (!forwardDeclarations.contains(it)) {
+                                aliasForwardDecl = "val _$it = ${struct.type}(Module.OPENXR, \"${struct.alias}\")\n"
+                                forwardDeclarations.add(it)
+                            }
                             alias = ", alias = _$it"
                         } else {
                             alias = ", alias = $it"
@@ -463,8 +466,11 @@ ${templateTypes.asSequence()
                 var parentStruct: String? = null
                 struct.parentstruct.let {
                     if (it != null) {
-                        if (!structDefinitions.contains(it) && forwardDeclarations.none { decl -> decl.name == it } && structInTemplate.contains(it)) {
-                            aliasForwardDecl = "val _$it = ${struct.type}(Module.OPENXR, \"$it\")\n"
+                        if (!structDefinitions.contains(it) && structInTemplate.contains(it)) {
+                            if (!forwardDeclarations.contains(it)) {
+                                aliasForwardDecl = "val _$it = ${struct.type}(Module.OPENXR, \"$it\")\n"
+                                forwardDeclarations.add(it)
+                            }
                             parentStruct = ", parentStruct = _$it"
                         } else {
                             parentStruct = ", parentStruct = $it"
