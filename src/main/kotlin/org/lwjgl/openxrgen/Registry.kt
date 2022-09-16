@@ -101,7 +101,7 @@ fun main(args: Array<String>) {
         }
 
     try {
-        convert(openxrDocs, structs)
+        convert(openxrDocs.resolve("specification"), structs)
     } catch (e: Exception) {
         e.printStackTrace()
         exitProcess(-1)

@@ -24,7 +24,7 @@ internal fun createAsciidoctor(root: Path, structs: Map<String, TypeStruct>): As
     // we always pass these as document attribs
     val commonAttribs = """^:([^:]+):"""
         .toRegex(RegexOption.MULTILINE)
-        .findAll(String(Files.readAllBytes(root.resolve("specification").resolve("sources").resolve("attribs.adoc")), StandardCharsets.UTF_8))
+        .findAll(String(Files.readAllBytes(root.resolve("config").resolve("attribs.adoc")), StandardCharsets.UTF_8))
         .map { it.groups[1]!!.value }
         .toHashSet()
 
@@ -59,7 +59,8 @@ internal fun createAsciidoctor(root: Path, structs: Map<String, TypeStruct>): As
                 "stageMaskName",
                 "accessMaskName",
                 "maxinstancecheck",
-                "imageopts"
+                "imageopts",
+                "vkRefPageRoot"
             )
 
             private val LINKS = """link:\+\+(.+?)\+\+""".toRegex()
@@ -179,12 +180,12 @@ internal fun createAsciidoctor(root: Path, structs: Map<String, TypeStruct>): As
         .attributeMissing("warn")
 
     asciidoctor.loadFile(
-        root.resolve("specification").resolve("sources").resolve("attribs.adoc").toFile(),
+        root.resolve("config").resolve("attribs.adoc").toFile(),
         Options.builder()
             .backend("lwjgl")
             .docType("manpage")
             .safe(SafeMode.UNSAFE)
-            .baseDir(root.resolve("specification").resolve("sources").toFile())
+            .baseDir(root.resolve("config").toFile())
             .build()
     ).let { file ->
         commonAttribs.forEach {
@@ -249,6 +250,10 @@ internal class LWJGLConverter(backend: String, opts: Map<String, Any>) : StringC
                         // This is the only remaining awkward use of regex after the refactoring to the Asciidoc Extension API.
                         // We need it in order to have readable equations when viewing javadoc in source form (vs HTML).
                         "<code>${NESTED_CODE_PATTERN.replace(node.text, "$1")}</code>"
+                    } else if (node.hasRole("big")) {
+                        node.text // TODO: better rendering?
+                    } else if (node.hasRole("underline")) {
+                        "<u>${node.text}</u>"
                     } else
                         throw IllegalStateException(node.roles.joinToString(", "))
                 }
@@ -313,7 +318,7 @@ internal class LWJGLConverter(backend: String, opts: Map<String, Any>) : StringC
                 "icon"        -> ""
                 "image"       -> "<img src=\"https://raw.githubusercontent.com/KhronosGroup/OpenXR-Docs/master/${node.target}${if (node.target.endsWith(".svg")) "?sanitize=true" else ""}\" alt=\"${node.attributes["alt"]}\">"
                 else          -> {
-                    if (node.hasAttribute("terms")) { // TODO:
+                    if (node.hasAttribute("terms") || node.hasAttribute("guard")) { // TODO:
                         ""
                     } else {
                         System.err.println("lwjgl: type: ${node.type}")

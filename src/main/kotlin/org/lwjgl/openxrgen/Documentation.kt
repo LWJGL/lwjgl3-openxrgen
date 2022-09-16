@@ -46,22 +46,25 @@ internal fun convert(root: Path, structs: Map<String, TypeStruct>) {
     // The attributes are used in ifdef preprocessor directives in extensions.txt
     // to enable extensions.
     val extensionAppendices = (
-        Files.lines(root.resolve("specification/sources/chapters/extensions/meta/current_extension_appendices.adoc")).asSequence() +
-            Files.lines(root.resolve("specification/sources/chapters/extensions/meta/deprecated_extension_appendices.adoc")).asSequence() +
-            Files.lines(root.resolve("specification/sources/chapters/extensions/meta/provisional_extension_appendices.adoc")).asSequence()
-        ).toList()
-    val extensionIDs = """^include::../\w+/(\w+)\.adoc\[]""".toRegex().let { regex ->
+        Files.lines(root.resolve("generated/meta/current_extension_appendices.adoc")).asSequence() +
+        Files.lines(root.resolve("generated/meta/deprecated_extension_appendices.adoc")).asSequence() +
+        Files.lines(root.resolve("generated/meta/provisional_extension_appendices.adoc")).asSequence()
+    ).toList()
+
+    val extensionIDs = HashMap<String, String>()
+    """^ifdef::(.+?)\[]""".toRegex(RegexOption.MULTILINE).let { regex ->
         extensionAppendices.asSequence()
-            .mapNotNull {
+            .forEach {
                 val result = regex.find(it)
-                if (result == null) {
-                    null
-                } else {
-                    val (extension) = result.destructured
-                    if (DISABLED_EXTENSIONS.contains(extension)) null else extension
+                if (result != null) {
+                    val (extensions) = result.destructured
+                    extensions.splitToSequence('+').forEach { extension ->
+                        if (!DISABLED_EXTENSIONS.contains(extension))
+                            extensionIDs[extension] = extension
+                    }
+
                 }
             }
-            .associateBy { it }
     }
     extensionIDs.keys
         .associateWithTo(EXTENSION_TEMPLATES) { it.template }
@@ -69,20 +72,22 @@ internal fun convert(root: Path, structs: Map<String, TypeStruct>) {
     val attribs = attribsBuilder
         .attribute("vkRefPageRoot", "https://www.khronos.org/registry/vulkan/specs/1.2-extensions/man/html")
         .attribute("XR_VERSION_1_0")
-        .attributes(extensionIDs)
+        .attributes(extensionIDs as Map<String, Any>)
         // These two are necessary because something goes wrong when a Preprocessor is used
         .attribute("HAS_PROVISIONAL_EXTENSIONS")
         .attribute("HAS_DEPRECATED_EXTENSIONS")
+        .attribute("appendices", root.resolve("sources").resolve("chapters").resolve("extensions").toFile())
+        .attribute("config", root.resolve("config").toFile())
+        .attribute("generated", root.resolve("generated").toFile())
         .build()
 
-    val appendices = root.resolve("appendices")
     val extensions = asciidoctor.load(
         extensionAppendices.joinToString("\n"),
         Options.builder()
             .backend("lwjgl")
             .docType("manpage")
             .safe(SafeMode.UNSAFE)
-            .baseDir(appendices.toFile())
+            .baseDir(root.resolve("sources").resolve("chapters").resolve("extensions").toFile())
             .attributes(attribs)
             .option("structs", structs)
             .build()
@@ -92,14 +97,14 @@ internal fun convert(root: Path, structs: Map<String, TypeStruct>) {
 
     // Enums, functions & structs
 
-    val document = root.resolve("specification").resolve("man").let { man ->
+    val document = root.resolve("generated").resolve("refpage").let { refpage ->
         asciidoctor.loadFile(
-            man.resolve("apispec.txt").toFile(),
+            refpage.resolve("apispec.txt").toFile(),
             Options.builder()
                 .backend("lwjgl")
                 .docType("manpage")
                 .safe(SafeMode.UNSAFE)
-                .baseDir(man.toFile())
+                .baseDir(refpage.toFile())
                 .attributes(attribs)
                 .option("structs", structs)
                 .build()

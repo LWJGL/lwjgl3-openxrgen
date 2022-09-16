@@ -24,6 +24,7 @@ internal val DISABLED_EXTENSIONS = setOf(
     "XR_KHR_android_surface_swapchain",
     "XR_KHR_android_thread_settings",
     "XR_KHR_loader_init_android",
+    "XR_KHR_opengl_es_enable",
     "XR_FB_android_surface_swapchain_create",
     "XR_FB_swapchain_update_state_android_surface",
     "XR_OCULUS_android_session_state_enable"

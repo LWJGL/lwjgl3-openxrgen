@@ -1,42 +1,91 @@
-From 10486497e855348990f4fb6bc090091014677ae8 Mon Sep 17 00:00:00 2001
+From f823e36a531919b6d3f8a1608757bd1a7791a84e Mon Sep 17 00:00:00 2001
 From: Ioannis Tsakpinis <iotsakp@gmail.com>
-Date: Thu, 6 Jan 2022 18:31:15 +0200
+Date: Sat, 17 Sep 2022 02:22:54 +0300
 Subject: [PATCH] LWJGL fixes
 
 ---
- specification/.gitignore                      |  6 ++--
- specification/registry/xr.xml                 | 33 ++++++++++---------
- specification/scripts/make_ext_dependency.py  | 22 +++++++++++++
+ specification/.gitignore                      | 10 +++++-
+ specification/makeSpec                        | 11 ++++++
+ specification/registry/xr.xml                 | 35 ++++++++++---------
+ specification/scripts/genRef.py               |  4 +--
  specification/scripts/reflib.py               | 14 ++++++++
  .../extensions/khr/khr_loader_init.adoc       |  4 +++
  .../extensions/khr/khr_visibility_mask.adoc   |  1 -
  .../msft_composition_layer_reprojection.adoc  |  2 --
- 7 files changed, 61 insertions(+), 21 deletions(-)
+ .../extensions/msft/msft_spatial_anchor.adoc  |  4 +--
+ 9 files changed, 60 insertions(+), 25 deletions(-)
 
 diff --git a/specification/.gitignore b/specification/.gitignore
-index f25998c..01b1c30 100644
+index 57426bb..5d13baf 100644
 --- a/specification/.gitignore
 +++ b/specification/.gitignore
-@@ -5,10 +5,12 @@
+@@ -3,7 +3,7 @@
+ # SPDX-License-Identifier: Apache-2.0
+
  scripts/__pycache__
- scripts/xrapi.py
- out/*
 -generated/*
 +#generated/*
-+generated/**/*inc
- sources/chapters/extensions/meta/*
  example-builds/generated/
--man/*
-+#man/*
-+man/logfile
  artifacts/
  temp/
- diffs/
+@@ -17,3 +17,11 @@ registry/regenerated.rnc
+ registry/schxslt-cli.jar
+ registry/cli-*.jar
+ registry/report.srvl
++
++# LWJGL
++out/*
++sources/chapters/extensions/metadata/*
++generated/**/*inc
++sources/chapters/extensions/meta/*
++#man/*
++man/logfile
+\ No newline at end of file
+diff --git a/specification/makeSpec b/specification/makeSpec
+index a092783..d5e2dda 100755
+--- a/specification/makeSpec
++++ b/specification/makeSpec
+@@ -103,6 +103,17 @@ if __name__ == '__main__':
+         title = 'with all registered extensions'
+         exts = set(deps.allExtensions())
+
++    exts.remove('XR_KHR_D3D11_enable')
++    exts.remove('XR_KHR_D3D12_enable')
++    exts.remove('XR_KHR_android_create_instance')
++    exts.remove('XR_KHR_android_surface_swapchain')
++    exts.remove('XR_KHR_android_thread_settings')
++    exts.remove('XR_KHR_loader_init_android')
++    exts.remove('XR_KHR_opengl_es_enable')
++    exts.remove('XR_FB_android_surface_swapchain_create')
++    exts.remove('XR_FB_swapchain_update_state_android_surface')
++    exts.remove('XR_OCULUS_android_session_state_enable')
++
+     # List of explicitly requested extension and all its dependencies
+     extraexts = set()
+     for name in results.extension:
 diff --git a/specification/registry/xr.xml b/specification/registry/xr.xml
-index 05e083f..1a07e14 100644
+index 9cda0af..26b3fbe 100644
 --- a/specification/registry/xr.xml
 +++ b/specification/registry/xr.xml
-@@ -1533,8 +1533,8 @@ maintained in the default branch of the Khronos OpenXR GitHub project.
+@@ -1333,7 +1333,7 @@ maintained in the default branch of the Khronos OpenXR GitHub project.
+             <member values="XR_TYPE_SPATIAL_GRAPH_NODE_SPACE_CREATE_INFO_MSFT"><type>XrStructureType</type> <name>type</name></member>
+             <member>const <type>void</type>*                            <name>next</name></member>
+             <member><type>XrSpatialGraphNodeTypeMSFT</type>             <name>nodeType</name></member>
+-            <member><type>uint8_t</type>                                <name>nodeId</name>[XR_GUID_SIZE_MSFT]</member>
++            <member><type>uint8_t</type>                                <name>nodeId</name>[<enum>XR_GUID_SIZE_MSFT</enum>]</member>
+             <member><type>XrPosef</type>                                <name>pose</name></member>
+         </type>
+         <type category="struct" name="XrSpatialGraphStaticNodeBindingCreateInfoMSFT">
+@@ -1350,7 +1350,7 @@ maintained in the default branch of the Khronos OpenXR GitHub project.
+         <type category="struct" name="XrSpatialGraphNodeBindingPropertiesMSFT">
+             <member values="XR_TYPE_SPATIAL_GRAPH_NODE_BINDING_PROPERTIES_MSFT"><type>XrStructureType</type> <name>type</name></member>
+             <member><type>void</type>*   <name>next</name></member>
+-            <member><type>uint8_t</type> <name>nodeId</name>[XR_GUID_SIZE_MSFT]</member>
++            <member><type>uint8_t</type> <name>nodeId</name>[<enum>XR_GUID_SIZE_MSFT</enum>]</member>
+             <member><type>XrPosef</type> <name>poseInNodeSpace</name></member>
+         </type>
+
+@@ -1614,8 +1614,8 @@ maintained in the default branch of the Khronos OpenXR GitHub project.
          <type category="struct" name="XrControllerModelNodePropertiesMSFT">
              <member values="XR_TYPE_CONTROLLER_MODEL_NODE_PROPERTIES_MSFT"><type>XrStructureType</type> <name>type</name></member>
              <member><type>void</type>* <name>next</name></member>
@@ -47,7 +96,7 @@ index 05e083f..1a07e14 100644
          </type>
          <type category="struct" name="XrControllerModelPropertiesMSFT">
              <member values="XR_TYPE_CONTROLLER_MODEL_PROPERTIES_MSFT"><type>XrStructureType</type> <name>type</name></member>
-@@ -1861,7 +1861,7 @@ maintained in the default branch of the Khronos OpenXR GitHub project.
+@@ -1987,7 +1987,7 @@ maintained in the default branch of the Khronos OpenXR GitHub project.
              <member values="XR_TYPE_RENDER_MODEL_PROPERTIES_FB"><type>XrStructureType</type> <name>type</name></member>
              <member><type>void</type>*                                                       <name>next</name></member>
              <member><type>uint32_t</type>                                                    <name>vendorId</name></member>
@@ -56,7 +105,7 @@ index 05e083f..1a07e14 100644
              <member><type>XrRenderModelKeyFB</type>                                          <name>modelKey</name></member>
              <member><type>uint32_t</type>                                                    <name>modelVersion</name></member>
              <member><type>XrRenderModelFlagsFB</type>                                        <name>flags</name></member>
-@@ -1894,7 +1894,7 @@ maintained in the default branch of the Khronos OpenXR GitHub project.
+@@ -2163,7 +2163,7 @@ maintained in the default branch of the Khronos OpenXR GitHub project.
              <member><type>uint64_t</type> <name>trackedKeyboardId</name></member>
              <member><type>XrVector3f</type> <name>size</name></member>
              <member><type>XrKeyboardTrackingFlagsFB</type> <name>flags</name></member>
@@ -65,31 +114,22 @@ index 05e083f..1a07e14 100644
          </type>
          <type category="struct" name="XrKeyboardSpaceCreateInfoFB">
              <member values="XR_TYPE_KEYBOARD_SPACE_CREATE_INFO_FB"><type>XrStructureType</type> <name>type</name></member>
-@@ -2012,12 +2012,12 @@ maintained in the default branch of the Khronos OpenXR GitHub project.
-         <type category="struct" name="XrPassthroughColorMapMonoToRgbaFB">
+@@ -2286,12 +2286,12 @@ maintained in the default branch of the Khronos OpenXR GitHub project.
+         <type category="struct" name="XrPassthroughColorMapMonoToRgbaFB" structextends="XrPassthroughStyleFB">
              <member values="XR_TYPE_PASSTHROUGH_COLOR_MAP_MONO_TO_RGBA_FB"><type>XrStructureType</type> <name>type</name></member>
              <member>const <type>void</type>* <name>next</name></member>
 -            <member><type>XrColor4f</type>   <name>textureColorMap</name>[XR_PASSTHROUGH_COLOR_MAP_MONO_SIZE_FB]</member>
 +            <member><type>XrColor4f</type>   <name>textureColorMap</name>[<enum>XR_PASSTHROUGH_COLOR_MAP_MONO_SIZE_FB</enum>]</member>
          </type>
-         <type category="struct" name="XrPassthroughColorMapMonoToMonoFB">
+         <type category="struct" name="XrPassthroughColorMapMonoToMonoFB" structextends="XrPassthroughStyleFB">
              <member values="XR_TYPE_PASSTHROUGH_COLOR_MAP_MONO_TO_MONO_FB"><type>XrStructureType</type> <name>type</name></member>
              <member>const <type>void</type>* <name>next</name></member>
 -            <member><type>uint8_t</type>     <name>textureColorMap</name>[XR_PASSTHROUGH_COLOR_MAP_MONO_SIZE_FB]</member>
 +            <member><type>uint8_t</type>     <name>textureColorMap</name>[<enum>XR_PASSTHROUGH_COLOR_MAP_MONO_SIZE_FB</enum>]</member>
          </type>
-         <type category="struct" name="XrEventDataPassthroughStateChangedFB">
-             <member values="XR_TYPE_EVENT_DATA_PASSTHROUGH_STATE_CHANGED_FB"><type>XrStructureType</type> <name>type</name></member>
-@@ -2139,7 +2139,7 @@ maintained in the default branch of the Khronos OpenXR GitHub project.
-
-         <!-- XR_EXT_uuid -->
-         <type category="struct" name="XrUuidEXT">
--            <member><type>uint8_t</type> <name>data</name>[XR_UUID_SIZE_EXT]</member>
-+            <member><type>uint8_t</type> <name>data</name>[<enum>XR_UUID_SIZE_EXT</enum>]</member>
-         </type>
-
-         <!-- XR_ALMALENCE_digital_lens_control -->
-@@ -2932,9 +2932,9 @@ maintained in the default branch of the Khronos OpenXR GitHub project.
+         <type category="struct" name="XrPassthroughBrightnessContrastSaturationFB" structextends="XrPassthroughStyleFB">
+             <member values="XR_TYPE_PASSTHROUGH_BRIGHTNESS_CONTRAST_SATURATION_FB"><type>XrStructureType</type> <name>type</name></member>
+@@ -3324,9 +3324,9 @@ maintained in the default branch of the Khronos OpenXR GitHub project.
              <proto><type>XrResult</type> <name>xrEnumerateViewConfigurations</name></proto>
              <param><type>XrInstance</type> <name>instance</name></param>
              <param><type>XrSystemId</type> <name>systemId</name></param>
@@ -102,7 +142,7 @@ index 05e083f..1a07e14 100644
          </command>
          <command successcodes="XR_SUCCESS" errorcodes="XR_ERROR_VALIDATION_FAILURE,XR_ERROR_RUNTIME_FAILURE,XR_ERROR_HANDLE_INVALID,XR_ERROR_INSTANCE_LOST,XR_ERROR_SIZE_INSUFFICIENT,XR_ERROR_VIEW_CONFIGURATION_TYPE_UNSUPPORTED,XR_ERROR_SYSTEM_INVALID">
              <proto><type>XrResult</type> <name>xrEnumerateEnvironmentBlendModes</name></proto>
-@@ -3273,7 +3273,7 @@ maintained in the default branch of the Khronos OpenXR GitHub project.
+@@ -3671,7 +3671,7 @@ maintained in the default branch of the Khronos OpenXR GitHub project.
          <command successcodes="XR_SUCCESS" errorcodes="XR_ERROR_FUNCTION_UNSUPPORTED,XR_ERROR_VALIDATION_FAILURE,XR_ERROR_RUNTIME_FAILURE,XR_ERROR_HANDLE_INVALID,XR_ERROR_INSTANCE_LOST,XR_ERROR_TIME_INVALID">
              <proto><type>XrResult</type> <name>xrConvertTimespecTimeToTimeKHR</name></proto>
              <param><type>XrInstance</type> <name>instance</name></param>
@@ -111,7 +151,7 @@ index 05e083f..1a07e14 100644
              <param><type>XrTime</type>* <name>time</name></param>
          </command>
 
-@@ -3547,7 +3547,7 @@ maintained in the default branch of the Khronos OpenXR GitHub project.
+@@ -3961,7 +3961,7 @@ maintained in the default branch of the Khronos OpenXR GitHub project.
          <command successcodes="XR_SUCCESS,XR_SESSION_LOSS_PENDING" errorcodes="XR_ERROR_FUNCTION_UNSUPPORTED,XR_ERROR_VALIDATION_FAILURE,XR_ERROR_RUNTIME_FAILURE,XR_ERROR_HANDLE_INVALID,XR_ERROR_INSTANCE_LOST,XR_ERROR_SESSION_LOST,XR_ERROR_FEATURE_UNSUPPORTED,XR_ERROR_COLOR_SPACE_UNSUPPORTED_FB">
              <proto><type>XrResult</type> <name>xrSetColorSpaceFB</name></proto>
              <param><type>XrSession</type> <name>session</name></param>
@@ -120,7 +160,7 @@ index 05e083f..1a07e14 100644
          </command>
 
          <!-- XR_FB_foveation -->
-@@ -3803,9 +3803,9 @@ maintained in the default branch of the Khronos OpenXR GitHub project.
+@@ -4317,9 +4317,9 @@ maintained in the default branch of the Khronos OpenXR GitHub project.
          <command successcodes="XR_SUCCESS" errorcodes="XR_ERROR_FUNCTION_UNSUPPORTED,XR_ERROR_VALIDATION_FAILURE,XR_ERROR_RUNTIME_FAILURE,XR_ERROR_HANDLE_INVALID,XR_ERROR_INSTANCE_LOST,XR_ERROR_SIZE_INSUFFICIENT">
              <proto><type>XrResult</type> <name>xrEnumerateViveTrackerPathsHTCX</name></proto>
              <param><type>XrInstance</type> <name>instance</name></param>
@@ -133,7 +173,7 @@ index 05e083f..1a07e14 100644
          </command>
 
          <!-- commands for XR_VARJO_marker_tracking -->
-@@ -4207,7 +4207,7 @@ maintained in the default branch of the Khronos OpenXR GitHub project.
+@@ -4755,7 +4755,7 @@ maintained in the default branch of the Khronos OpenXR GitHub project.
              <enum offset="1" extends="XrStructureType"        name="XR_TYPE_GRAPHICS_BINDING_OPENGL_ES_ANDROID_KHR"/>
              <enum offset="2" extends="XrStructureType"        name="XR_TYPE_SWAPCHAIN_IMAGE_OPENGL_ES_KHR"/>
              <enum offset="3" extends="XrStructureType"        name="XR_TYPE_GRAPHICS_REQUIREMENTS_OPENGL_ES_KHR"/>
@@ -142,7 +182,7 @@ index 05e083f..1a07e14 100644
              <type name="XrSwapchainImageOpenGLESKHR"/>
              <type name="XrGraphicsRequirementsOpenGLESKHR"/>
              <command name="xrGetOpenGLESGraphicsRequirementsKHR"/>
-@@ -4729,6 +4729,7 @@ maintained in the default branch of the Khronos OpenXR GitHub project.
+@@ -5288,6 +5288,7 @@ maintained in the default branch of the Khronos OpenXR GitHub project.
 
              <enum offset="0" extends="XrStructureType"                       name="XR_TYPE_COMPOSITION_LAYER_SECURE_CONTENT_FB"/>
              <type name="XrCompositionLayerSecureContentFB"/>
@@ -150,41 +190,30 @@ index 05e083f..1a07e14 100644
          </require>
      </extension>
 
-diff --git a/specification/scripts/make_ext_dependency.py b/specification/scripts/make_ext_dependency.py
-index 13bccbe..4e826ba 100755
---- a/specification/scripts/make_ext_dependency.py
-+++ b/specification/scripts/make_ext_dependency.py
-@@ -193,6 +193,28 @@ if __name__ == '__main__':
-             # Skip unsupported extensions
-             pass
+diff --git a/specification/scripts/genRef.py b/specification/scripts/genRef.py
+index bb4d975..8b9cc53 100644
+--- a/specification/scripts/genRef.py
++++ b/specification/scripts/genRef.py
+@@ -98,7 +98,7 @@ def printFooter(fp, leveloffset=0):
+     print('ifdef::doctype-manpage[]',
+           f'{prefix} Copyright',
+           '',
+-          'include::{config}/copyright-ccby' + conventions.file_suffix + '[]',
++          'include::{config}/copyright-ccby.adoc' + '[]',
+           'endif::doctype-manpage[]',
+           '',
+           'ifndef::doctype-manpage[]',
+@@ -733,7 +733,7 @@ def genSinglePageRef(baseDir):
 
-+    allExts.remove('XR_KHR_D3D11_enable')
-+    khrExts.remove('XR_KHR_D3D11_enable')
-+
-+    allExts.remove('XR_KHR_D3D12_enable')
-+    khrExts.remove('XR_KHR_D3D12_enable')
-+
-+    allExts.remove('XR_KHR_android_create_instance')
-+    khrExts.remove('XR_KHR_android_create_instance')
-+
-+    allExts.remove('XR_KHR_android_surface_swapchain')
-+    khrExts.remove('XR_KHR_android_surface_swapchain')
-+
-+    allExts.remove('XR_KHR_android_thread_settings')
-+    khrExts.remove('XR_KHR_android_thread_settings')
-+
-+    allExts.remove('XR_KHR_loader_init_android')
-+    khrExts.remove('XR_KHR_loader_init_android')
-+
-+    allExts.remove('XR_FB_android_surface_swapchain_create')
-+    allExts.remove('XR_FB_swapchain_update_state_android_surface')
-+    allExts.remove('XR_OCULUS_android_session_state_enable')
-+
-     if args.outscript:
-         make_dir(args.outscript)
-         fp = open(args.outscript, 'w', encoding='utf-8')
+     print('== Copyright', file=head)
+     print('', file=head)
+-    print('include::{config}/copyright-ccby' + conventions.file_suffix + '[]', file=head)
++    print('include::{config}/copyright-ccby.adoc' + '[]', file=head)
+     print('', file=head)
+
+     # Inject the table of contents. Asciidoc really ought to be generating
 diff --git a/specification/scripts/reflib.py b/specification/scripts/reflib.py
-index 8374b84..594333d 100644
+index 6548b42..7a371b1 100644
 --- a/specification/scripts/reflib.py
 +++ b/specification/scripts/reflib.py
 @@ -219,6 +219,11 @@ def nextPara(file, line):
@@ -199,7 +228,7 @@ index 8374b84..594333d 100644
          line = line + 1
      # Skip over white space
      while (line != maxLine and isempty(file[line])):
-@@ -267,6 +272,10 @@ def clampToBlock(line, minline, maxline):
+@@ -266,6 +271,10 @@ def clampToBlock(line, minline, maxline):
 
      return line
 
@@ -210,7 +239,7 @@ index 8374b84..594333d 100644
  def fixupRefs(pageMap, specFile, file):
      """Fill in missing fields in pageInfo structures, to the extent they can be
      inferred.
-@@ -324,6 +333,11 @@ def fixupRefs(pageMap, specFile, file):
+@@ -326,6 +335,11 @@ def fixupRefs(pageMap, specFile, file):
                  pi.param = nextPara(file, pi.include)
                  if pi.body is None:
                      pi.body = nextPara(file, pi.param)
@@ -223,10 +252,10 @@ index 8374b84..594333d 100644
                  if pi.body is None:
                      pi.body = nextPara(file, pi.include)
 diff --git a/specification/sources/chapters/extensions/khr/khr_loader_init.adoc b/specification/sources/chapters/extensions/khr/khr_loader_init.adoc
-index 02ab449..33907c8 100644
+index 7e9dda2..55e6409 100644
 --- a/specification/sources/chapters/extensions/khr/khr_loader_init.adoc
 +++ b/specification/sources/chapters/extensions/khr/khr_loader_init.adoc
-@@ -53,6 +53,7 @@ include::../../../../generated/validity/structs/XrLoaderInitInfoBaseHeaderKHR.tx
+@@ -53,6 +53,7 @@ include::{generated}/validity/structs/XrLoaderInitInfoBaseHeaderKHR.txt[]
  --
 
  *New Functions*
@@ -234,7 +263,7 @@ index 02ab449..33907c8 100644
  [open,refpage='xrInitializeLoaderKHR',desc='Initializes loader',type='protos']
  --
  To initialize an OpenXR loader with platform or implementation-specific
-@@ -66,7 +67,10 @@ include::../../../../generated/api/protos/xrInitializeLoaderKHR.txt[]
+@@ -66,7 +67,10 @@ include::{generated}/api/protos/xrInitializeLoaderKHR.txt[]
    slink:XrLoaderInitInfoBaseHeaderKHR structure, which is a polymorphic type
    defined by other platform- or implementation-specific extensions.
  ****
@@ -246,10 +275,10 @@ index 02ab449..33907c8 100644
 
  *Version History*
 diff --git a/specification/sources/chapters/extensions/khr/khr_visibility_mask.adoc b/specification/sources/chapters/extensions/khr/khr_visibility_mask.adoc
-index 1f1eb04..833f549 100644
+index 48cd6e2..d15aaff 100644
 --- a/specification/sources/chapters/extensions/khr/khr_visibility_mask.adoc
 +++ b/specification/sources/chapters/extensions/khr/khr_visibility_mask.adoc
-@@ -105,7 +105,6 @@ include::../../../../generated/api/structs/XrVisibilityMaskKHR.txt[]
+@@ -105,7 +105,6 @@ include::{generated}/api/structs/XrVisibilityMaskKHR.txt[]
    When rendering the mask for use in a projection layer, these vertices must
    be transformed by the application's projection matrix used for the
    respective slink:XrCompositionLayerProjectionView.
@@ -258,10 +287,10 @@ index 1f1eb04..833f549 100644
    `0` to indicate a request to retrieve the required capacity.
  * pname:indexCountOutput is filled in by the runtime with the count of
 diff --git a/specification/sources/chapters/extensions/msft/msft_composition_layer_reprojection.adoc b/specification/sources/chapters/extensions/msft/msft_composition_layer_reprojection.adoc
-index 0715001..af66667 100644
+index 613ae99..750b9ea 100644
 --- a/specification/sources/chapters/extensions/msft/msft_composition_layer_reprojection.adoc
 +++ b/specification/sources/chapters/extensions/msft/msft_composition_layer_reprojection.adoc
-@@ -171,10 +171,8 @@ include::../../../../generated/api/structs/XrCompositionLayerReprojectionPlaneOv
+@@ -172,10 +172,8 @@ include::{generated}/api/structs/XrCompositionLayerReprojectionPlaneOverrideMSFT
  ****
  * pname:position describes the position of the focus plane represented in
    the corresponding slink:XrCompositionLayerProjection::pname:space.
@@ -272,5 +301,28 @@ index 0715001..af66667 100644
  * pname:velocity is a velocity of the position in the corresponding
    slink:XrCompositionLayerProjection::pname:space measured in meters per
    second.
+diff --git a/specification/sources/chapters/extensions/msft/msft_spatial_anchor.adoc b/specification/sources/chapters/extensions/msft/msft_spatial_anchor.adoc
+index 86aa6ad..867b6a3 100644
+--- a/specification/sources/chapters/extensions/msft/msft_spatial_anchor.adoc
++++ b/specification/sources/chapters/extensions/msft/msft_spatial_anchor.adoc
+@@ -6,8 +6,6 @@ include::{generated}/meta/XR_MSFT_spatial_anchor.adoc[]
+
+ *Overview*
+
+-[open,refpage='XrSpatialAnchorMSFT',type='handles',desc='Represents a spatial anchor']
+---
+ This extension allows an application to create a **spatial anchor**, an
+ arbitrary freespace point in the user's physical environment that will then
+ be tracked by the runtime.
+@@ -15,6 +13,8 @@ The runtime should: then adjust the position and orientation of that
+ anchor's origin over time as needed, independently of all other spaces and
+ anchors, to ensure that it maintains its original mapping to the real world.
+
++[open,refpage='XrSpatialAnchorMSFT',type='handles',desc='Represents a spatial anchor']
++--
+ include::{generated}/api/handles/XrSpatialAnchorMSFT.txt[]
+
+ Spatial anchors are often used in combination with an `UNBOUNDED_MSFT`
 --
 2.30.2.windows.1
+
