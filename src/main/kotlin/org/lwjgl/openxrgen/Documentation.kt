@@ -137,30 +137,40 @@ private fun buildExtensionDocumentation(
     blocks: List<StructuralNode>,
     extensionIDs: Map<String, String>
 ) {
-    var i = findFirstExtensionBlock(blocks, 0, extensionIDs)
+    var i = 0
     while (i < blocks.size) {
-        val firstBlock = blocks[i++]
-        val from = i
-
-        // Up to start of next extension
         i = findFirstExtensionBlock(blocks, i, extensionIDs)
+        val extension = blocks[i++]
 
-        // Concat blocks
-        EXTENSION_DOC[firstBlock.id.substring(3)] =
-            // Re-order sections for readability: description first, metadata last
-            (
-                // appendices/<extension>.txt: skip "Other Extension Metadata" and drop "Description" header
-                blocks[from + 1].blocks.asSequence() +
-                    // appendices/<extension>.txt: all sections after "Description"
-                    blocks.listIterator(from + 2).asSequence().take(i - (from + 2)) +
-                    // meta/<extension>.txt
-                    firstBlock +
-                    // appendices/<extension>.txt: "Other Extension Metadata"
-                    blocks[from]
-                )
-                .filter { it !is Section || !(it.title.startsWith("New") || it.title == "Issues" || it.title.startsWith("Version")) }
-                .map { nodeToJavaDoc(it) }
-                .joinToString("\n\n$t$t")
+        var overviewStart = extension.blocks.indexOfFirst {
+            (it is Section && it.title == "Overview") || it is Block && it.lines.size == 1 && it.lines[0] == "*Overview*"
+        }
+        if (overviewStart == -1) {
+            continue
+        }
+
+        val content = if (extension.blocks[overviewStart] is Section) {
+            val sectionIndex = overviewStart
+            overviewStart = 0
+            extension.blocks[sectionIndex]
+        } else {
+            overviewStart += 1
+            extension
+        }
+
+        var overviewEnd = content.blocks.size
+        for (j in overviewStart until overviewEnd) {
+            val node = content.blocks[j]
+            if (node is Section || node.hasAttribute("refpage") || (node is Block && node.lines.size == 1 && node.lines[0].startsWith("*"))) {
+                overviewEnd = j
+                break
+            }
+        }
+
+        EXTENSION_DOC[extension.id.substring(3)] =
+            content.blocks.subList(overviewStart, overviewEnd).asSequence()
+            .map { nodeToJavaDoc(it) }
+            .joinToString("\n\n$t$t", prefix = "The <a href=\"https://registry.khronos.org/OpenXR/specs/1.0/html/xrspec.html\\#${extension.id}\">${extension.id}</a> extension.\n\n$t$t")
     }
 }
 

@@ -709,7 +709,7 @@ val $name = "$template".nativeClassXR("$name", type = "${extension.type}", postf
             .joinToString("\n$t", postfix = "\n$t") { "javaImport(\"$it\")" }
     }documentation =
         $QUOTES3
-        ${EXTENSION_DOC[name] ?: "The ${S}templateName extension."}
+        ${EXTENSION_DOC[name] ?: "The <a href=\"https://registry.khronos.org/OpenXR/specs/1.0/html/xrspec.html\\#$name\">$name</a> extension."}
         $QUOTES3
 """)
 

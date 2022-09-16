@@ -295,11 +295,13 @@ internal class LWJGLConverter(backend: String, opts: Map<String, Any>) : StringC
                             }
                         }
                     } else {
-                        """<a target="_blank" href="${node.target.replace("#", "\\#")}">${node.text
-                            .ifEmpty { node.target }
+                        val href = node.target.replace("#", "\\#")
+                        """<a target="_blank" href="$href">${node.text
                             .run {
                                 if (startsWith("https://www.khronos.org/registry/OpenXR/specs/1.0/html/xrspec.html#"))
                                     getSectionXREF(substring("https://www.khronos.org/registry/OpenXR/specs/1.0/html/xrspec.html#".length))
+                                else if (this == node.target)
+                                    href
                                 else
                                     this
                             }
