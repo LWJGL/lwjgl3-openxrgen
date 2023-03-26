@@ -8,6 +8,8 @@ import java.io.*
 import java.nio.file.*
 import kotlin.system.*
 
+internal lateinit var OPENXR_DOCS_ROOT: Path
+
 val String.template
     get() = this
         .splitToSequence('_')
@@ -42,8 +44,8 @@ fun main(args: Array<String>) {
         "Usage: RegistryKt <openxr-docs-path> <lwjgl3-path>"
     }
 
-    val openxrDocs = Paths.get(args[0]).toAbsolutePath().normalize()
-    val registry = openxrDocs.let {
+    OPENXR_DOCS_ROOT = Paths.get(args[0]).toAbsolutePath().normalize()
+    val registry = OPENXR_DOCS_ROOT.let {
         require(Files.isDirectory(it)) {
             "Invalid OpenXR-Docs repository path specified: $it"
         }
@@ -101,7 +103,7 @@ fun main(args: Array<String>) {
         }
 
     try {
-        convert(openxrDocs.resolve("specification"), structs)
+        convert(OPENXR_DOCS_ROOT.resolve("specification"), structs)
     } catch (e: Exception) {
         e.printStackTrace()
         exitProcess(-1)
@@ -788,7 +790,14 @@ val $name = "$template".nativeClassXR("$name", type = "${extension.type}", postf
             }
             if (dependency != null && require.commands != null) {
                 require.commands.forEach { commandRef ->
-                    dependencies.merge(commandRef.name, dependency) { current, dependency ->
+                    dependencies.merge(
+                        commandRef.name,
+                        if (!dependency.contains(',')) dependency else dependency
+                            .split(',')
+                            .joinToString(separator = " && ", prefix = "(", postfix = ")") {
+                                "ext.contains(\"$it\")"
+                            }
+                    ) { current, dependency ->
                         when {
                             current.startsWith("ext.contains") -> """$current || ext.contains("$dependency")"""
                             else                               -> """ext.contains("$current") || ext.contains("$dependency")"""
@@ -886,7 +895,7 @@ private fun PrintWriter.printCommands(
 
         dependencies?.get(commandRef).let {
             if (it != null) {
-                print(if (it.startsWith("ext.contains"))
+                print(if (it.contains('.'))
                     "DependsOn(\"\"\"$it\"\"\").."
                 else
                     "DependsOn(\"$it\").."

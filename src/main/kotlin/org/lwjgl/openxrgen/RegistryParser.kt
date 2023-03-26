@@ -135,9 +135,25 @@ internal class Command(
     val implicitexternsyncparams: ImplicitExternSyncParams?
 ) : Function
 
+internal class UserPath(val path: String)
+internal class Component(val user_path: String?, val subpath: String, val type: String, val system: Boolean?)
+
+internal class InteractionProfile(
+    val name: String,
+    val title: String,
+    val user_paths: List<UserPath>,
+    val components: List<Component>,
+)
+
+internal class Extend(
+    val interaction_profile_path: String,
+    val components: List<Component>
+)
+
 internal class TypeRef(val name: String)
 
 internal data class CommandRef(val name: String)
+internal data class InteractionProfileRef(val name: String)
 
 internal class Require(
     val comment: String?,
@@ -145,7 +161,9 @@ internal class Require(
     val extension: String?,
     val types: List<TypeRef>?,
     val enums: List<Enum>?,
-    val commands: List<CommandRef>?
+    val commands: List<CommandRef>?,
+    val interaction_profiles: List<InteractionProfile>?,
+    val extends: List<Extend>?
 )
 
 internal class Feature(
@@ -180,6 +198,7 @@ internal class Registry(
     val types: List<Type>,
     val enums: List<Enums>,
     val commands: List<Command>,
+    val interaction_profiles: List<InteractionProfile>,
     val features: List<Feature>,
     val extensions: List<Extension>
 )
@@ -502,6 +521,31 @@ internal fun parse(registry: Path) = XStream(Xpp3Driver()).let { xs ->
         xs.useAttributeFor(it, "errorcodes")
     }
 
+    InteractionProfile::class.java.let {
+        xs.alias("interaction_profile", it)
+        xs.useAttributeFor(it, "name")
+        xs.useAttributeFor(it, "title")
+    }
+
+    Extend::class.java.let {
+        xs.addImplicitCollection(Require::class.java, "extends", "extend", it)
+        xs.useAttributeFor(it, "interaction_profile_path")
+    }
+
+    UserPath::class.java.let {
+        xs.addImplicitCollection(InteractionProfile::class.java, "user_paths", "user_path", it)
+        xs.useAttributeFor(it, "path")
+    }
+
+    Component::class.java.let {
+        xs.addImplicitCollection(InteractionProfile::class.java, "components", "component", it)
+        xs.addImplicitCollection(Extend::class.java, "components", "component", it)
+        xs.useAttributeFor(it, "user_path")
+        xs.useAttributeFor(it, "subpath")
+        xs.useAttributeFor(it, "type")
+        xs.useAttributeFor(it, "system")
+    }
+
     Field::class.java.let {
         xs.registerConverter(FieldConverter())
 
@@ -534,6 +578,11 @@ internal fun parse(registry: Path) = XStream(Xpp3Driver()).let { xs ->
 
     CommandRef::class.java.let {
         xs.addImplicitCollection(Require::class.java, "commands", "command", it)
+        xs.useAttributeFor(it, "name")
+    }
+
+    InteractionProfileRef::class.java.let {
+        xs.addImplicitCollection(Require::class.java, "interaction_profiles", "interaction_profile", it)
         xs.useAttributeFor(it, "name")
     }
 

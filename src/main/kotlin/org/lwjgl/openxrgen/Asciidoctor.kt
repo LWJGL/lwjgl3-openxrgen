@@ -8,6 +8,7 @@ import org.intellij.lang.annotations.*
 import java.net.*
 import java.nio.charset.*
 import java.nio.file.*
+import kotlin.io.path.*
 
 private val NUMERIC_PATTERN = """^\d+$""".toRegex()
 private val LWJGL_OPTIONS = HashMap<String, Any>().apply {
@@ -318,7 +319,7 @@ internal class LWJGLConverter(backend: String, opts: Map<String, Any>) : StringC
                 }
                 "single"      -> "`${node.text}'"
                 "icon"        -> ""
-                "image"       -> "<img src=\"https://raw.githubusercontent.com/KhronosGroup/OpenXR-Docs/master/${node.target}${if (node.target.endsWith(".svg")) "?sanitize=true" else ""}\" alt=\"${node.attributes["alt"]}\">"
+                "image"       -> "<img src=\"https://raw.githubusercontent.com/KhronosGroup/OpenXR-Docs/master/${Paths.get(node.target).relativeTo(OPENXR_DOCS_ROOT).toString().replace('\\', '/')}${if (node.target.endsWith(".svg")) "?sanitize=true" else ""}\" alt=\"${node.attributes["alt"]}\">"
                 else          -> {
                     if (node.hasAttribute("terms") || node.hasAttribute("guard")) { // TODO:
                         ""
