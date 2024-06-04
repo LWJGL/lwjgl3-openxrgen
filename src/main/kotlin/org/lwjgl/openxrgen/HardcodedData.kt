@@ -52,6 +52,11 @@ internal val SYSTEM_STRUCTS = mapOf(
     "timespec" to TypeStruct("struct", "struct timespec", false, null, emptyList(), null, null)
 )
 
+internal val OPAQUE_PFN_TYPES = setOf(
+    "PFN_xrVoidFunction",
+    "PFN_xrEglGetProcAddressMNDX"
+)
+
 internal val MACROS = setOf(
     "MAKE_VERSION",
     "VERSION_MAJOR",
@@ -75,7 +80,9 @@ internal fun configAPIConstantImports(enumClassMap: MutableMap<String, String>) 
     enumClassMap["XR_MAX_ACTION_NAME_SIZE"] = "XR10"
     enumClassMap["XR_MAX_LOCALIZED_ACTION_SET_NAME_SIZE"] = "XR10"
     enumClassMap["XR_MAX_LOCALIZED_ACTION_NAME_SIZE"] = "XR10"
+    enumClassMap["XR_UUID_SIZE"] = "XR10"
     enumClassMap["XR_MIN_COMPOSITION_LAYERS_SUPPORTED"] = "XR10"
+    enumClassMap["XR_API_LAYER_MAX_SETTINGS_PATH_SIZE"] = "XRLoader10"
 }
 
 private val UNNAMED_XREFS = setOf<String>(

@@ -9,8 +9,5 @@
         <module name="lwjgl3-openxrgen" />
       </profile>
     </annotationProcessing>
-    <bytecodeTargetLevel>
-      <module name="lwjgl3-openxrgen" target="1.8" />
-    </bytecodeTargetLevel>
   </component>
 </project>

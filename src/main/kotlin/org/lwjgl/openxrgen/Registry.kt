@@ -82,11 +82,14 @@ fun main(args: Array<String>) {
 
     val enumRegistry = EnumRegistry(registry.enums)
 
-    val commands = registry.commands.associateByTo(HashMap()) {
-        it.name ?: it.proto.name
-    }
+    val commands = registry.commands.asSequence()
+        .flatMap { it.commands }
+        .associateByTo(HashMap()) {
+            it.name ?: it.proto.name
+        }
 
     registry.commands.asSequence()
+        .flatMap { it.commands }
         .filter { it.name != null }
         .forEach {
             val ref = commands[it.alias]!!
@@ -114,13 +117,15 @@ fun main(args: Array<String>) {
     val extensions = registry.extensions.asSequence()
         .filter { it.supported != "disabled" && !DISABLED_EXTENSIONS.contains(it.name) }
 
-    registry.features.forEach { feature ->
-        feature.requires.forEach { requires ->
-            requires.enums?.forEach { enum ->
-                enumRegistry.enumMap.putIfAbsent(enum.name, enum)
+    registry.features.asSequence()
+        .filter { !it.name.startsWith("XR_LOADER_") }
+        .forEach { feature ->
+            feature.requires.forEach { requires ->
+                requires.enums?.forEach { enum ->
+                    enumRegistry.enumMap.putIfAbsent(enum.name, enum)
+                }
             }
         }
-    }
     extensions.forEach { extension ->
         extension.requires.forEach { requires ->
             requires.enums?.forEach { enum ->
@@ -130,9 +135,11 @@ fun main(args: Array<String>) {
     }
 
     val enumsSeen = HashSet<Enums>()
-    registry.features.forEach { feature ->
-        generateFeature(root, types, enumRegistry, structs, commands, feature, enumsSeen)
-    }
+    registry.features.asSequence()
+        .filter { !it.name.startsWith("XR_LOADER_") }
+        .forEach { feature ->
+            generateFeature(root, types, enumRegistry, structs, commands, feature, enumsSeen)
+        }
 
     extensions.forEach { extension ->
         // Type declarations for enums are missing in some extensions.
@@ -140,7 +147,13 @@ fun main(args: Array<String>) {
         generateExtension(root, types, enumRegistry, structs, commands, extension, enumsSeen)
     }
 
-    val featureTypes = getDistinctTypes(registry.features.asSequence().flatMap { it.requires.asSequence() }, commands, types)
+    val featureTypes = getDistinctTypes(
+        registry.features.asSequence()
+            .filter { !it.name.startsWith("XR_LOADER_") }
+            .flatMap { it.requires.asSequence() },
+        commands,
+        types
+    )
     val extensionTypes = getDistinctTypes(extensions.flatMap { it.requires.asSequence() }, commands, types)
         .toMutableSet()
     extensionTypes.removeAll(featureTypes)
@@ -208,12 +221,27 @@ private fun getDistinctTypes(
     }
     .toSet()
 
-private fun getDistinctTypes(name: String, types: Map<String, Type>): Sequence<Type> = when (val type = types.getValue(name)) {
-    is TypeStruct      -> type.members.asSequence()
-        .filter { it.type != name }
-        .flatMap { getDistinctTypes(it.type, types) } + sequenceOf(type)
-    is TypeFuncpointer -> getDistinctTypes(type.proto.type, types) + sequenceOf(type) + type.params.asSequence().flatMap { getDistinctTypes(it.type, types) }
-    else               -> sequenceOf(type)
+private fun getDistinctTypes(name: String, types: Map<String, Type>): Sequence<Type> =
+    getDistinctTypesImpl(name, types, HashSet())
+
+// Handles struct/function-pointer recursion
+private fun getDistinctTypesImpl(name: String, types: Map<String, Type>, visited: HashSet<String>): Sequence<Type> {
+    if (visited.contains(name)) {
+        return emptySequence()
+    }
+    visited.add(name)
+    return when (val type = types.getValue(name)) {
+        is TypeStruct      -> type.members.asSequence()
+            .filter { it.type != name }
+            .flatMap { getDistinctTypesImpl(it.type, types, visited) } + sequenceOf(type)
+
+        is TypeFuncpointer -> getDistinctTypesImpl(type.proto.type, types, visited) +
+            sequenceOf(type) +
+            type.params.asSequence().flatMap { getDistinctTypesImpl(it.type, types, visited) }
+
+        else               ->
+            sequenceOf(type)
+    }
 }
 
 private fun getParamType(param: Field, indirection: String, hasConst: Boolean, hasCheck: Boolean, encoding: String) =
@@ -319,7 +347,7 @@ else {
             indirection.isNotEmpty() &&
             check.isEmpty() &&
             !isString &&
-            !(type == "opaque_p" || type == "opaque_const_p" || nativeType is TypeSystem || nativeType is TypeStruct) &&
+            !(type == "opaque_p" || type == "opaque_const_p" || nativeType is TypeSystem || (nativeType is TypeBase && !nativeType.name.startsWith("Xr")) || nativeType is TypeStruct) &&
             params.none { param.len.contains(it.name) }
         ) "Unsafe.." else ""
         val paramType = if ("false,true" == param.optional && (isString || nativeType is TypeStruct)) "Input.." else ""
@@ -637,7 +665,7 @@ val $template = "$template".nativeClass(Module.OPENXR, "$template", prefix = "XR
 
         ${enumList.asSequence()
                             .map {
-                                enumRegistry.enumImportMap[it.name] = template    
+                                enumRegistry.enumImportMap[it.name] = template
                                 "\"${it.name.substring(3)}\".${it.getEnumValue(it.extnumber ?: 0, enumRegistry, typeLong)}" 
                             }
                             .joinToString(",\n$t$t")}
@@ -711,7 +739,7 @@ val $name = "$template".nativeClassXR("$name", type = "${extension.type}", postf
             .joinToString("\n$t", postfix = "\n$t") { "javaImport(\"$it\")" }
     }documentation =
         $QUOTES3
-        ${EXTENSION_DOC[name] ?: "The <a href=\"https://registry.khronos.org/OpenXR/specs/1.0/html/xrspec.html\\#$name\">$name</a> extension."}
+        ${EXTENSION_DOC[name] ?: "The <a href=\"https://registry.khronos.org/OpenXR/specs/1.1/html/xrspec.html\\#$name\">$name</a> extension."}
         $QUOTES3
 """)
 

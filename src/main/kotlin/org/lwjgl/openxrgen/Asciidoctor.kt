@@ -56,12 +56,6 @@ internal fun createAsciidoctor(root: Path, structs: Map<String, TypeStruct>): As
             )
             private val KNOWN_ATTRIBS = setOf(
                 "refpage",
-                "imageparam",
-                "stageMaskName",
-                "accessMaskName",
-                "maxinstancecheck",
-                "imageopts",
-                "vkRefPageRoot"
             )
 
             private val LINKS = """link:\+\+(.+?)\+\+""".toRegex()
@@ -96,7 +90,7 @@ internal fun createAsciidoctor(root: Path, structs: Map<String, TypeStruct>): As
                         }
                     }
                     lines[i] = LINKS.replace(lines[i]) { m ->
-                        "link:++${m.groups[1]!!.value.encodeURI()}++"
+                        "link:++${m.groups[1]!!.value.encodeURI().replace("#", "\\#")}++"
                     }
                     i++
                 }
@@ -135,8 +129,8 @@ internal fun createAsciidoctor(root: Path, structs: Map<String, TypeStruct>): As
         .inlineMacroQuoted("apiext", """apiext:(\w+)""") { "{@link ${it.substring(3).template} $it}" }
         .inlineMacroQuoted("tlink", """tlink:(\w+)""") {
             if (it.startsWith("PFN_xr")) {
-                if (it == "PFN_xrVoidFunction")
-                    "{@code PFN_xrVoidFunction}"
+                if (OPAQUE_PFN_TYPES.contains(it))
+                    "{@code $it}"
                 else
                     "##Xr${it.substring(6)}"
             } else {
@@ -264,7 +258,7 @@ internal class LWJGLConverter(backend: String, opts: Map<String, Any>) : StringC
                         if (EXTENSION_LINK_PATTERN.matches(refid)) {
                             "{@link ${refid.substring(3).template} $refid}"
                         } else {
-                            """<a target="_blank" href="https://www.khronos.org/registry/OpenXR/specs/1.0/html/xrspec.html\#$refid">${if (node.text != null) node.text else getSectionXREF(refid)}</a>"""
+                            """<a href="https://registry.khronos.org/OpenXR/specs/1.1/html/xrspec.html\#$refid">${if (node.text != null) node.text else getSectionXREF(refid)}</a>"""
                         }
                     }
                 }
@@ -290,17 +284,17 @@ internal class LWJGLConverter(backend: String, opts: Map<String, Any>) : StringC
                                 }
                             } else if (hasUnnamedXREF(match)) {
                                 // hack for vkAllocationFunction_return_rules
-                                """<a target="_blank" href="https://www.khronos.org/registry/OpenXR/specs/1.0/html/xrspec.html\#$match">${node.text}</a>"""
+                                """<a href="https://registry.khronos.org/OpenXR/specs/1.1/html/xrspec.html\#$match">${node.text}</a>"""
                             } else {
                                 "${node.text} ({@code $match})"
                             }
                         }
                     } else {
                         val href = node.target.replace("#", "\\#")
-                        """<a target="_blank" href="$href">${node.text
+                        """<a href="$href">${node.text
                             .run {
-                                if (startsWith("https://www.khronos.org/registry/OpenXR/specs/1.0/html/xrspec.html#"))
-                                    getSectionXREF(substring("https://www.khronos.org/registry/OpenXR/specs/1.0/html/xrspec.html#".length))
+                                if (startsWith("https://registry.khronos.org/OpenXR/specs/1.1/html/xrspec.html#"))
+                                    getSectionXREF(substring("https://registry.khronos.org/OpenXR/specs/1.1/html/xrspec.html#".length))
                                 else if (this == node.target)
                                     href
                                 else

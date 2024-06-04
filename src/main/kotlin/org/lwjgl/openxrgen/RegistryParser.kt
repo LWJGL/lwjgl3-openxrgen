@@ -53,7 +53,7 @@ internal class TypeHandle(
     name: String
 ) : Type(name)
 
-internal class TypeEnum(name: String) : Type(name)
+internal class TypeEnum(name: String, alias: String?) : Type(name)
 
 internal interface Function {
     val proto: Field
@@ -122,6 +122,10 @@ internal class Validity
 
 internal class ImplicitExternSyncParams(
     val params: List<Field>
+)
+
+internal class Commands(
+    val commands: List<Command>
 )
 
 internal class Command(
@@ -197,7 +201,7 @@ internal class Registry(
     val tags: List<Tag>,
     val types: List<Type>,
     val enums: List<Enums>,
-    val commands: List<Command>,
+    val commands: List<Commands>,
     val interaction_profiles: List<InteractionProfile>,
     val features: List<Feature>,
     val extensions: List<Extension>
@@ -394,7 +398,7 @@ internal class TypeConverter : Converter {
                 t
             }
             "enum"        -> {
-                TypeEnum(reader.getAttribute("alias") ?: reader.getAttribute("name"))
+                TypeEnum(reader.getAttribute("name"), reader.getAttribute("alias"))
             }
             "funcpointer" -> {
                 val proto = reader.let {
@@ -406,8 +410,8 @@ internal class TypeConverter : Converter {
                     Field(modifier, type, indirection.indirection, name, null, null, HashMap())
                 }
 
-                if (proto.name == "PFN_xrVoidFunction")
-                    TypePlatform("PFN_xrVoidFunction")
+                if (OPAQUE_PFN_TYPES.contains(proto.name))
+                    TypePlatform(proto.name)
                 else {
                     val params = ArrayList<Field>()
                     while (reader.hasMoreChildren()) {
@@ -513,7 +517,12 @@ internal fun parse(registry: Path) = XStream(Xpp3Driver()).let { xs ->
         xs.useAttributeFor(it, "comment")
     }
 
+    Commands::class.java.let {
+        xs.addImplicitCollection(Registry::class.java, "commands", "commands", it)
+    }
+
     Command::class.java.let {
+        xs.addImplicitCollection(Commands::class.java, "commands", "command", it)
         xs.alias("command", it)
         xs.useAttributeFor(it, "name")
         xs.useAttributeFor(it, "alias")

@@ -70,7 +70,6 @@ internal fun convert(root: Path, structs: Map<String, TypeStruct>) {
         .associateWithTo(EXTENSION_TEMPLATES) { it.template }
 
     val attribs = attribsBuilder
-        .attribute("vkRefPageRoot", "https://www.khronos.org/registry/vulkan/specs/1.2-extensions/man/html")
         .attribute("XR_VERSION_1_0")
         .attributes(extensionIDs as Map<String, Any>)
         // These two are necessary because something goes wrong when a Preprocessor is used
@@ -99,7 +98,7 @@ internal fun convert(root: Path, structs: Map<String, TypeStruct>) {
 
     val document = root.resolve("generated").resolve("refpage").let { refpage ->
         asciidoctor.loadFile(
-            refpage.resolve("apispec.txt").toFile(),
+            refpage.resolve("apispec.adoc").toFile(),
             Options.builder()
                 .backend("lwjgl")
                 .docType("manpage")
@@ -170,7 +169,7 @@ private fun buildExtensionDocumentation(
         EXTENSION_DOC[extension.id.substring(3)] =
             content.blocks.subList(overviewStart, overviewEnd).asSequence()
             .map { nodeToJavaDoc(it) }
-            .joinToString("\n\n$t$t", prefix = "The <a href=\"https://registry.khronos.org/OpenXR/specs/1.0/html/xrspec.html\\#${extension.id}\">${extension.id}</a> extension.\n\n$t$t")
+            .joinToString("\n\n$t$t", prefix = "The <a href=\"https://registry.khronos.org/OpenXR/specs/1.1/html/xrspec.html\\#${extension.id}\">${extension.id}</a> extension.\n\n$t$t")
     }
 }
 
