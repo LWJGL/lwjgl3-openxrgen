@@ -10,16 +10,24 @@ import kotlin.system.*
 
 internal lateinit var OPENXR_DOCS_ROOT: Path
 
-val String.template
-    get() = this
-        .splitToSequence('_')
-        .map { token ->
-            if (EXTENSION_TOKEN_REPLACEMENTS.containsKey(token))
-                EXTENSION_TOKEN_REPLACEMENTS[token]
-            else
-                "${token[0].uppercaseChar()}${token.substring(1)}"
-        }
-        .joinToString("")
+val String.template: String
+    get() {
+        return if (this.startsWith("VERSION_"))
+            "XR" + this
+                .removePrefix("VERSION_")
+                .splitToSequence('_')
+                .joinToString("")
+        else
+            this
+                .splitToSequence('_')
+                .map { token ->
+                    if (EXTENSION_TOKEN_REPLACEMENTS.containsKey(token))
+                        EXTENSION_TOKEN_REPLACEMENTS[token]
+                    else
+                        "${token[0].uppercaseChar()}${token.substring(1)}"
+                }
+                .joinToString("")
+    }
 
 internal data class Import(val templatePackage: String?, val javaPackage: String?)
 

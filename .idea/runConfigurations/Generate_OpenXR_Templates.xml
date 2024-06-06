@@ -12,6 +12,7 @@
           <option name="goals">
             <list>
               <option value="exec:exec@generate" />
+              <option value="-X" />
             </list>
           </option>
           <option name="multimoduleDir" />
