@@ -91,7 +91,25 @@ private val UNNAMED_XREFS = setOf<String>(
 internal fun hasUnnamedXREF(section: String) = UNNAMED_XREFS.contains(section)
 
 private val SECTION_XREFS = mapOf<String, String>(
-    //
+    "ext_debug_utils-session-labels" to "Session Labels",
+    "ext_future-completing" to "Completing a Future",
+    "ext_future-scope" to "Future Scope",
+    "fb_triangle_mesh_state_defining_topology" to "Defining Topology",
+    "fb_triangle_mesh_state_ready" to "Ready",
+    "fb_triangle_mesh_state_undefined_topology" to "Undefined Topology",
+    "fb_triangle_mesh_state_updating_mesh" to "Updating Mesh",
+    "fb_triangle_mesh_state_updating_vertices" to "Updating Vertices",
+    "fundamentals-api-version-numbers-and-semantics" to "API Version Numbers and Semantics",
+    "fundamentals-buffer-size-parameters" to "two-call idiom",
+    "fundamentals-duration" to "duration",
+    "fundamentals-extensions" to "extension",
+    "fundamentals-prediction-time-limits" to "Prediction Time Limits",
+    "fundamentals-valid-usage-for-structure-types" to "Valid Usage for Structure Types",
+    "instance-api-layers-and-extensions" to "API Layers and Extensions",
+    "rendering-compositing" to "Compositing",
+    "semantic-paths-input" to "Input subpaths",
+    "semantic-paths-path-atom-type" to "Path Atom Type",
+    "semantic-paths-user" to "/user paths"
 )
 private val SECTION_XREFS_USED = HashSet<String>()
 internal fun getSectionXREF(section: String): String {
