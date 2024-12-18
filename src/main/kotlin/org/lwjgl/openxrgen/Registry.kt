@@ -113,13 +113,6 @@ fun main(args: Array<String>) {
             )
         }
 
-    try {
-        convert(OPENXR_DOCS_ROOT.resolve("specification"), structs)
-    } catch (e: Exception) {
-        e.printStackTrace()
-        exitProcess(-1)
-    }
-
     // TODO: This must be fixed post OpenXR 1.0. We currently have no other way to identify types used in core only.
 
     val extensions = registry.extensions.asSequence()
@@ -187,9 +180,6 @@ fun main(args: Array<String>) {
 
     generateTypes(root, "XRTypes", types, structs, structExtends, enumRegistry, featureTypes)
     generateTypes(root, "ExtensionTypes", types, structs, structExtends, enumRegistry, extensionTypes)
-
-    printUnusedSectionXREFs()
-    printUnusedLatexEquations()
 
     exitProcess(0)
 }
@@ -290,7 +280,6 @@ private fun getCheck(param: Field, indirection: String, structs: Map<String, Typ
 
 private fun getParams(
     function: Function,
-    functionDoc: FunctionDoc?,
     types: Map<String, Type>,
     structs: Map<String, TypeStruct>,
     forceIN: Boolean = false,
@@ -360,7 +349,7 @@ else {
         ) "Unsafe.." else ""
         val paramType = if ("false,true" == param.optional && (isString || nativeType is TypeStruct)) "Input.." else ""
 
-        "$autoSize$check$unsafe$nullable$paramType$type(\"${param.name}\", \"${functionDoc?.parameters?.get(param.name) ?: ""}\")"
+        "$autoSize$check$unsafe$nullable$paramType$type(\"${param.name}\")"
     }.joinToString(",\n$indent", prefix = ",\n\n$indent")
 }
 
@@ -453,25 +442,14 @@ ${templateTypes.asSequence()
                         }
                     }
 
-                val functionDoc = FUNCTION_DOC[fp.name]
                 """${structTypes}val ${fp.name} = Module.OPENXR.callback {
     ${getReturnType(fp.proto)}(
-        "${fp.name.substring(4).let { "${it[0].uppercase()}${it.substring(1)}" }}",
-        "${functionDoc?.shortDescription ?: ""}"${getParams(fp, FUNCTION_DOC[fp.proto.name], types, structs, forceIN = true, indent = "$t$t")},
+        "${fp.name.substring(4).let { "${it[0].uppercase()}${it.substring(1)}" }}"${getParams(fp, types, structs, forceIN = true, indent = "$t$t")},
 
         nativeType = "${fp.name}"
-    ) {
-        ${getJavaImports(types, sequenceOf(fp.proto) + fp.params.asSequence(), enumRegistry)}${if (functionDoc == null) "" else """documentation =
-        $QUOTES3
-        ${functionDoc.shortDescription}
-
-        ${functionDoc.cSpecification}
-
-        ${functionDoc.description}${if (seeAlsoIsEmpty(functionDoc.seeAlso)) "" else """
-
-        ${functionDoc.seeAlso}"""}
-        $QUOTES3"""}
-    }
+    )${getJavaImports(types, sequenceOf(fp.proto) + fp.params.asSequence(), enumRegistry).let { if (it.isEmpty()) " {}" else """ {
+        $it
+    }"""}}
 }"""
             }
             .let {
@@ -516,28 +494,12 @@ ${templateTypes.asSequence()
                     }
                 }
 
-                val structDoc = STRUCT_DOC[struct.name]
-
                 """${aliasForwardDecl ?: ""}${
                 if (struct.members.any { it.type == struct.name }) "val _${struct.name} = ${struct.type}(Module.OPENXR, \"${struct.name}\")\n" else ""
                 }val ${struct.name} = ${struct.type}(Module.OPENXR, "${struct.name}"${
                 if (struct.returnedonly) ", mutable = false" else ""
                 }${alias ?: ""}${parentStruct ?: ""}) {
-    ${getJavaImports(types, struct.members.asSequence(), enumRegistry)}${if (structDoc == null) {
-                    if (struct.alias == null) "" else """documentation = "See ##${struct.alias}."
-
-    """
-                } else
-                    """documentation =
-        $QUOTES3
-        ${structDoc.shortDescription}${if (structDoc.description.isEmpty()) "" else """
-
-        ${structDoc.description}"""}${if (seeAlsoIsEmpty(structDoc.seeAlso)) "" else """
-
-        ${structDoc.seeAlso}"""}
-        $QUOTES3
-
-    """}${struct.members.asSequence()
+    ${getJavaImports(types, struct.members.asSequence(), enumRegistry)}${struct.members.asSequence()
                     .map { member ->
                         val pointerSetters = if ((member.name == "next" && member.type == "void" && member.indirection == ".p")) {
                             val nextTypes = structExtends[struct.name]
@@ -592,7 +554,7 @@ ${templateTypes.asSequence()
                             if (member.type == struct.name) "_$it" else it
                         }
 
-                        "$pointerSetters$expression$autoSize$nullable$type(\"${member.name}\", \"${structDoc?.members?.get(member.name) ?: ""}\"${if (member.bits == null) "" else ", bits = ${member.bits}"})${
+                        "$pointerSetters$expression$autoSize$nullable$type(\"${member.name}\"${if (member.bits == null) "" else ", bits = ${member.bits}"})${
                         if (member.array != null) "[${member.array}]" else ""
                         }${
                         if (struct.returnedonly && ((member.name == "type" && member.type == "XrStructureType") || (member.name == "next" && member.type == "void" && member.indirection == ".p"))) ".mutable()" else ""
@@ -634,21 +596,16 @@ import org.lwjgl.generator.*${imports.asSequence()
         }
 import openxr.*
 
-val $template = "$template".nativeClass(Module.OPENXR, "$template", prefix = "XR", binding = XR_BINDING_INSTANCE) {
-    ${
+val $template = "$template".nativeClass(Module.OPENXR, "$template", prefix = "XR", binding = XR_BINDING_INSTANCE) {${
         VERSION_HISTORY[feature.number].let {
-            if (it == null) "" else "extends = XR$it\n$t"
+            if (it == null) "" else "\n${t}extends = XR$it"
         }
     }${
         if (imports.isEmpty()) "" else imports.asSequence()
             .mapNotNull { it.javaPackage }
             .sorted()
-            .joinToString("\n$t", postfix = "\n$t") { "javaImport(\"$it\")" }
-    }documentation =
-        $QUOTES3
-        The core OpenXR ${feature.number} functionality.
-        $QUOTES3
-""")
+            .joinToString("\n$t", prefix = "\n$t") { "javaImport(\"$it\")" }
+    }""")
         feature.requires.asSequence()
             .mapNotNull { it.enums }
             .forEach { enums ->
@@ -656,27 +613,15 @@ val $template = "$template".nativeClass(Module.OPENXR, "$template", prefix = "XR
                     .filter { it.extends != null && (it.value == null || !it.value.startsWith("XR_")) }
                     .groupBy { it.extends!! }
                     .forEach { (enumName, enumList) ->
-                        val extends = enumList.firstOrNull { it.extends != null }?.extends
                         val typeLong = enumRegistry.enums[enumName]?.bitwidth == 64
-                        val enumDoc = ENUM_DOC[enumName]
                         writer.println("""
     EnumConstant(
-        ${when {
-                            extends != null -> "\"Extends {@code $enumName}.\""
-                            enumDoc == null -> "\"$enumName\""
-                            else            -> """"$QUOTES3
-        ${enumDoc.shortDescription}${
-                            if (enumDoc.description.isEmpty()) "" else "\n\n$t$t${enumDoc.description}"}${
-                            if (seeAlsoIsEmpty(enumDoc.seeAlso)) "" else "\n\n$t$t${enumDoc.seeAlso}"}
-        $QUOTES3"""
-                        }},
-
         ${enumList.asSequence()
-                            .map {
-                                enumRegistry.enumImportMap[it.name] = template
-                                "\"${it.name.substring(3)}\".${it.getEnumValue(it.extnumber ?: 0, enumRegistry, typeLong)}" 
-                            }
-                            .joinToString(",\n$t$t")}
+            .map {
+                enumRegistry.enumImportMap[it.name] = template
+                "\"${it.name.substring(3)}\".${it.getEnumValue(it.extnumber ?: 0, enumRegistry, typeLong)}" 
+            }
+            .joinToString(",\n$t$t")}
     )""")
                     }
             }
@@ -701,10 +646,6 @@ val $template = "$template".nativeClass(Module.OPENXR, "$template", prefix = "XR
 
         writer.print("\n}")
     }
-}
-
-private fun seeAlsoIsEmpty(seeAlso: String?): Boolean {
-    return seeAlso == null || seeAlso.isEmpty() || seeAlso.contains("No cross-references are available")
 }
 
 private val XR_VERSION_REGEX = "XR_VERSION_(\\d+)_(\\d+)".toRegex()
@@ -739,17 +680,12 @@ import org.lwjgl.generator.*${imports.asSequence()
         }
 import openxr.*
 
-val $name = "$template".nativeClassXR("$name", type = "${extension.type}", postfix = "${name.substringBefore('_')}") {
-    ${
+val $name = "$template".nativeClassXR("$name", type = "${extension.type}", postfix = "${name.substringBefore('_')}") {${
         if (imports.isEmpty()) "" else imports.asSequence()
             .mapNotNull { it.javaPackage }
             .sorted()
-            .joinToString("\n$t", postfix = "\n$t") { "javaImport(\"$it\")" }
-    }documentation =
-        $QUOTES3
-        ${EXTENSION_DOC[name] ?: "The <a href=\"https://registry.khronos.org/OpenXR/specs/1.1/html/xrspec.html\\#$name\">$name</a> extension."}
-        $QUOTES3
-""")
+            .joinToString("\n$t", prefix = "\n$t") { "javaImport(\"$it\")" }
+    }""")
 
         extension.requires.asSequence()
             .mapNotNull { it.enums }
@@ -763,42 +699,27 @@ val $name = "$template".nativeClassXR("$name", type = "${extension.type}", postf
                             if (enum.name.endsWith("_EXTENSION_NAME")) {
                                 writer.println("""
     StringConstant(
-        "The extension name.",
-
         "${enum.name.substring(3)}"${enum.alias.let { if (it == null) "..${enum.value}" else ".expr(\"$it\")" }}
     )""")
                                 return@nextEnumList
                             } else if (enum.name.endsWith("_SPEC_VERSION")) {
                                 writer.println("""
     IntConstant(
-        "The extension specification version.",
-
         "${enum.name.substring(3)}".."${enum.alias ?: enum.value}"
     )""")
                                 return@nextEnumList
                             }
                         }
 
-                        val extends = enumList.firstOrNull { it.extends != null }?.extends
                         val typeLong = enumRegistry.enums[enumName]?.bitwidth == 64
-                        val enumDoc = ENUM_DOC[enumName]
                         writer.println("""
     EnumConstant${if (typeLong) "Long" else ""}(
-        ${when {
-                            extends != null -> "\"Extends {@code $enumName}.\""
-                            enumDoc == null -> "\"$enumName\""
-                            else -> """"$QUOTES3
-        ${enumDoc.shortDescription}${
-                        if (enumDoc.description.isEmpty()) "" else "\n\n$t$t${enumDoc.description}"}${
-                        if (seeAlsoIsEmpty(enumDoc.seeAlso)) "" else "\n\n$t$t${enumDoc.seeAlso}"}
-        $QUOTES3"""}},
-
         ${enumList.asSequence()
-                            .map {
-                                enumRegistry.enumImportMap[it.name] = template    
-                                "\"${it.name.substring(3)}\".${it.getEnumValue(it.extnumber ?: extension.number, enumRegistry, typeLong)}" 
-                            }
-                            .joinToString(",\n$t$t")}
+            .map {
+                enumRegistry.enumImportMap[it.name] = template    
+                "\"${it.name.substring(3)}\".${it.getEnumValue(it.extnumber ?: extension.number, enumRegistry, typeLong)}" 
+            }
+            .joinToString(",\n$t$t")}
     )""")
                     }
             }
@@ -893,15 +814,8 @@ private fun PrintWriter.printEnums(className: String, enums: List<Enums>, extens
         .filter { block -> block.enums != null }
         .forEach { block ->
             val typeLong = block.bitwidth == 64
-            val enumDoc = ENUM_DOC[block.name]
             println("""
     EnumConstant${if (typeLong) "Long" else ""}(
-        ${if (enumDoc == null) "\"${block.name}\"" else """$QUOTES3${"""
-        ${enumDoc.shortDescription}${
-            if (enumDoc.description.isEmpty()) "" else "\n\n$t$t${enumDoc.description}"}${
-            if (seeAlsoIsEmpty(enumDoc.seeAlso)) "" else "\n\n$t$t${enumDoc.seeAlso}"}
-        """.splitLargeLiteral()}$QUOTES3"""},
-
         ${block.enums!!.joinToString(",\n$t$t") {
                 enumRegistry.enumImportMap[it.name] = className
                 "\"${it.name.substring(3)}\".${it.getEnumValue(it.extnumber ?: extensionNumber, enumRegistry, typeLong)}"
@@ -939,27 +853,8 @@ private fun PrintWriter.printCommands(
             }
         }
 
-        val functionDoc = FUNCTION_DOC[name]
         println("""${getReturnType(cmd.proto)}(
-        "$name",
-        ${if (functionDoc == null) {
-            if (cmd.alias != null) "\"See #${cmd.alias.substring(2)}().\"" else "\"\""
-        } else
-            """$QUOTES3
-        ${functionDoc.shortDescription}
-
-        ${functionDoc.cSpecification}
-
-        ${functionDoc.description}${if (seeAlsoIsEmpty(functionDoc.seeAlso)) "" else """
-
-        ${functionDoc.seeAlso}"""}
-        $QUOTES3"""
-        }${getParams(
-            cmd,
-            functionDoc ?: cmd.alias.let { if (it != null) FUNCTION_DOC[it.substring(2)] else null },
-            types, 
-            structs
-        )}
+        "$name"${getParams(cmd, types, structs)}
     )""")
     }
 }

@@ -24,6 +24,7 @@ internal val DISABLED_EXTENSIONS = setOf(
     "XR_KHR_android_surface_swapchain",
     "XR_KHR_android_thread_settings",
     "XR_KHR_loader_init_android",
+    "XR_KHR_metal_enable",
     "XR_KHR_opengl_es_enable",
     "XR_FB_android_surface_swapchain_create",
     "XR_FB_swapchain_update_state_android_surface",
@@ -57,13 +58,6 @@ internal val OPAQUE_PFN_TYPES = setOf(
     "PFN_xrEglGetProcAddressMNDX"
 )
 
-internal val MACROS = setOf(
-    "MAKE_VERSION",
-    "VERSION_MAJOR",
-    "VERSION_MINOR",
-    "VERSION_PATCH"
-)
-
 internal fun configAPIConstantImports(enumClassMap: MutableMap<String, String>) {
     enumClassMap["XR_MAX_EXTENSION_NAME_SIZE"] = "XR10"
     enumClassMap["XR_MAX_API_LAYER_NAME_SIZE"] = "XR10"
@@ -83,74 +77,4 @@ internal fun configAPIConstantImports(enumClassMap: MutableMap<String, String>) 
     enumClassMap["XR_UUID_SIZE"] = "XR10"
     enumClassMap["XR_MIN_COMPOSITION_LAYERS_SUPPORTED"] = "XR10"
     enumClassMap["XR_API_LAYER_MAX_SETTINGS_PATH_SIZE"] = "XRLoader10"
-}
-
-private val UNNAMED_XREFS = setOf<String>(
-    //
-)
-internal fun hasUnnamedXREF(section: String) = UNNAMED_XREFS.contains(section)
-
-private val SECTION_XREFS = mapOf<String, String>(
-    "ext_debug_utils-session-labels" to "Session Labels",
-    "ext_future-completing" to "Completing a Future",
-    "ext_future-scope" to "Future Scope",
-    "fb_triangle_mesh_state_defining_topology" to "Defining Topology",
-    "fb_triangle_mesh_state_ready" to "Ready",
-    "fb_triangle_mesh_state_undefined_topology" to "Undefined Topology",
-    "fb_triangle_mesh_state_updating_mesh" to "Updating Mesh",
-    "fb_triangle_mesh_state_updating_vertices" to "Updating Vertices",
-    "fundamentals-api-version-numbers-and-semantics" to "API Version Numbers and Semantics",
-    "fundamentals-buffer-size-parameters" to "two-call idiom",
-    "fundamentals-duration" to "duration",
-    "fundamentals-extensions" to "extension",
-    "fundamentals-prediction-time-limits" to "Prediction Time Limits",
-    "fundamentals-valid-usage-for-structure-types" to "Valid Usage for Structure Types",
-    "instance-api-layers-and-extensions" to "API Layers and Extensions",
-    "rendering-compositing" to "Compositing",
-    "semantic-paths-input" to "Input subpaths",
-    "semantic-paths-path-atom-type" to "Path Atom Type",
-    "semantic-paths-user" to "/user paths"
-)
-private val SECTION_XREFS_USED = HashSet<String>()
-internal fun getSectionXREF(section: String): String {
-    if (section.startsWith("XR_")) {
-        return section
-    }
-
-    val text = SECTION_XREFS[section]
-    if (text == null) {
-        System.err.println("lwjgl: Missing section reference: $section")
-        return section
-    }
-    SECTION_XREFS_USED.add(section)
-    return text
-}
-internal fun printUnusedSectionXREFs() {
-    SECTION_XREFS.keys.asSequence()
-        .filter { !SECTION_XREFS_USED.contains(it) }
-        .forEach {
-            System.err.println("lwjgl: Unused section XREF:\n$it")
-        }
-}
-
-private val LATEX_REGISTRY = mapOf<String, String>(
-    //
-)
-private val LATEX_REGISTRY_USED = HashSet<String>()
-internal fun getLatexCode(source: String): String {
-    //val code = LATEX_REGISTRY[source] ?: throw IllegalStateException("Missing LaTeX equation:\n$source")
-    val code = LATEX_REGISTRY[source] ?: LATEX_REGISTRY[source.replace("\\s+".toRegex(), " ")]
-    if (code == null) {
-        System.err.println("lwjgl: Missing LateX equation:\n$source")
-        return source
-    }
-    LATEX_REGISTRY_USED.add(source)
-    return code
-}
-internal fun printUnusedLatexEquations() {
-    LATEX_REGISTRY.keys.asSequence()
-        .filter { !LATEX_REGISTRY_USED.contains(it) }
-        .forEach {
-            System.err.println("lwjgl: Unused LateX equation:\n$it")
-        }
 }
