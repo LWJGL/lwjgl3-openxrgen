@@ -13,27 +13,22 @@
 
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
-		<kotlin.version>2.0.0</kotlin.version>
+		<kotlin.version>2.1.0</kotlin.version>
 
 		<main.class>org.lwjgl.openxrgen.RegistryKt</main.class>
-		<path.openxr-docs>D:/CLONES/KHRONOS/OpenXR-Docs</path.openxr-docs>
-		<path.lwjgl3>D:/PROJECTS/lwjgl3</path.lwjgl3>
+		<path.openxr-docs>../../CLONES/KHRONOS/OpenXR-Docs</path.openxr-docs>
+		<path.lwjgl3>../lwjgl3</path.lwjgl3>
 	</properties>
 	<dependencies>
 		<dependency>
 			<groupId>com.thoughtworks.xstream</groupId>
 			<artifactId>xstream</artifactId>
-			<version>1.4.20</version>
+			<version>1.4.21</version>
 		</dependency>
 		<dependency>
 			<groupId>org.ogce</groupId>
 			<artifactId>xpp3</artifactId>
 			<version>1.1.6</version>
-		</dependency>
-		<dependency>
-			<groupId>org.asciidoctor</groupId>
-			<artifactId>asciidoctorj</artifactId>
-			<version>2.5.13</version>
 		</dependency>
 		<dependency>
 			<groupId>org.jetbrains.kotlin</groupId>
@@ -58,16 +53,16 @@
 			<plugin>
 				<groupId>org.codehaus.mojo</groupId>
 				<artifactId>versions-maven-plugin</artifactId>
-				<version>2.16.2</version>
+				<version>2.18.0</version>
 				<configuration>
-					<ruleSet>
-						<ignoreVersions>
-							<ignoreVersion>
-								<type>regex</type>
-								<version>(?i).+[\.\-](alpha|beta|M)\d*</version>
-							</ignoreVersion>
-						</ignoreVersions>
-					</ruleSet>
+				<ruleSet>
+					<ignoreVersions>
+						<ignoreVersion>
+							<type>regex</type>
+							<version>(?i).+[\.\-](alpha|beta|M|RC)-?\d*</version>
+						</ignoreVersion>
+					</ignoreVersions>
+				</ruleSet>
 				</configuration>
 			</plugin>
 			<plugin>
@@ -122,7 +117,7 @@
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-jar-plugin</artifactId>
-				<version>3.4.1</version>
+				<version>3.4.2</version>
 				<configuration>
 					<archive>
 						<manifest>
@@ -135,7 +130,7 @@
 			<plugin>
 				<groupId>org.codehaus.mojo</groupId>
 				<artifactId>exec-maven-plugin</artifactId>
-				<version>3.3.0</version>
+				<version>3.5.0</version>
 				<executions>
 					<execution>
 						<id>generate</id>

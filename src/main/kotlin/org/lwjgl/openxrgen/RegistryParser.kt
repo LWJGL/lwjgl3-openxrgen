@@ -65,15 +65,40 @@ internal class TypeFuncpointer(
     override val params: List<Field>
 ) : Type(proto.name), Function
 
-internal class TypeStruct(
-    val type: String, // struct or union
+internal abstract class TypeStruct(
     name: String,
-    val returnedonly: Boolean,
-    val structextends: List<String>?,
-    val members: List<Field>,
-    val alias: String?,
-    val parentstruct: String?
-) : Type(name)
+): Type(name) {
+    abstract val type: String // struct or union
+    abstract val returnedonly: Boolean
+    abstract val structextends: List<String>?
+    abstract val members: MutableList<Field>
+    abstract val alias: String?
+    abstract val parentstruct: String?
+}
+
+internal class TypeStructBase(
+    name: String,
+    override val type: String, // struct or union
+    override val returnedonly: Boolean,
+    override val structextends: List<String>?,
+    override val members: MutableList<Field>,
+    override val alias: String?,
+    override val parentstruct: String?
+) : TypeStruct(name)
+
+private class TypeStructAlias(
+    name: String,
+    override val alias: String,
+    reference: Lazy<TypeStruct>
+) : TypeStruct(name) {
+    private val ref: TypeStruct by reference
+
+    override val type: String get() = ref.type
+    override val returnedonly: Boolean get() = ref.returnedonly
+    override val structextends: List<String>? get() = ref.structextends
+    override val members: MutableList<Field> get() = ref.members
+    override val parentstruct: String? get() = ref.parentstruct
+}
 
 internal class Enum(
     val name: String,
@@ -264,7 +289,9 @@ internal class FieldConverter : Converter {
                             reader.moveUp()
                             check(!reader.hasMoreChildren() && reader.value == "]")
                         }
-                        it.endsWith(']')         -> array = it.substring(1, it.length - 1)
+                        it.endsWith(']')         -> array = it.substring(1, it.length - 1).let {
+                            if (it.startsWith("XR_")) "\"$it\"" else it
+                        }
                         else                     -> throw IllegalStateException()
                     }
                 else               -> throw IllegalStateException(it)
@@ -448,10 +475,9 @@ internal class TypeConverter : Converter {
                         reader.moveUp()
                     }
 
-                    TypeStruct(category, name, returnedonly, structextends, members, null, parentstruct)
+                    TypeStructBase(name, category, returnedonly, structextends, members, null, parentstruct)
                 } else {
-                    val ref = context.registryMap.structs[alias]!!
-                    TypeStruct(ref.type, name, ref.returnedonly, ref.structextends, ref.members, alias, parentstruct)
+                    TypeStructAlias(name, alias, lazy { context.registryMap.structs[alias] ?: throw IllegalStateException("Struct reference not found: $alias for struct $name") })
                 }
                 context.registryMap.structs[name] = t
                 t

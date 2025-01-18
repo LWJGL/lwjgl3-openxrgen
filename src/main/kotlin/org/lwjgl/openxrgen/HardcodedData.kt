@@ -48,33 +48,12 @@ internal val IMPORTS = mapOf(
 )
 
 internal val SYSTEM_STRUCTS = mapOf(
-    "IUnknown" to TypeStruct("struct", "IUnknown", false, null, emptyList(), null, null),
-    "LARGE_INTEGER" to TypeStruct("union", "LARGE_INTEGER", false, null, emptyList(), null, null),
-    "timespec" to TypeStruct("struct", "struct timespec", false, null, emptyList(), null, null)
+    "IUnknown" to TypeStructBase("IUnknown", "struct", false, null, mutableListOf(), null, null),
+    "LARGE_INTEGER" to TypeStructBase("LARGE_INTEGER", "union", false, null, mutableListOf(), null, null),
+    "timespec" to TypeStructBase("struct timespec", "struct", false, null, mutableListOf(), null, null)
 )
 
 internal val OPAQUE_PFN_TYPES = setOf(
     "PFN_xrVoidFunction",
     "PFN_xrEglGetProcAddressMNDX"
 )
-
-internal fun configAPIConstantImports(enumClassMap: MutableMap<String, String>) {
-    enumClassMap["XR_MAX_EXTENSION_NAME_SIZE"] = "XR10"
-    enumClassMap["XR_MAX_API_LAYER_NAME_SIZE"] = "XR10"
-    enumClassMap["XR_MAX_API_LAYER_DESCRIPTION_SIZE"] = "XR10"
-    enumClassMap["XR_MAX_SYSTEM_NAME_SIZE"] = "XR10"
-    enumClassMap["XR_MAX_APPLICATION_NAME_SIZE"] = "XR10"
-    enumClassMap["XR_MAX_ENGINE_NAME_SIZE"] = "XR10"
-    enumClassMap["XR_MAX_RUNTIME_NAME_SIZE"] = "XR10"
-    enumClassMap["XR_MAX_PATH_LENGTH"] = "XR10"
-    enumClassMap["XR_MAX_STRUCTURE_NAME_SIZE"] = "XR10"
-    enumClassMap["XR_MAX_RESULT_STRING_SIZE"] = "XR10"
-    enumClassMap["XR_MAX_GRAPHICS_APIS_SUPPORTED"] = "XR10"
-    enumClassMap["XR_MAX_ACTION_SET_NAME_SIZE"] = "XR10"
-    enumClassMap["XR_MAX_ACTION_NAME_SIZE"] = "XR10"
-    enumClassMap["XR_MAX_LOCALIZED_ACTION_SET_NAME_SIZE"] = "XR10"
-    enumClassMap["XR_MAX_LOCALIZED_ACTION_NAME_SIZE"] = "XR10"
-    enumClassMap["XR_UUID_SIZE"] = "XR10"
-    enumClassMap["XR_MIN_COMPOSITION_LAYERS_SUPPORTED"] = "XR10"
-    enumClassMap["XR_API_LAYER_MAX_SETTINGS_PATH_SIZE"] = "XRLoader10"
-}

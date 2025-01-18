@@ -2,7 +2,7 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/lwjgl3-openxrgen.iml" filepath="$PROJECT_DIR$/lwjgl3-openxrgen.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/lwjgl3-openxrgen.iml" filepath="$PROJECT_DIR$/.idea/lwjgl3-openxrgen.iml" />
     </modules>
   </component>
 </project>
